@@ -291,7 +291,7 @@
 
         // --- MQTT SETUP ---
         const broker = 'wss://dustboy-wss-bridge.laris.workers.dev/mqtt';
-        const topic = 'DUSTBOY/+/+/+/status';
+        const topic = 'DUSTBOY/#'; // Expanded to capture more potential data points
         const client = mqtt.connect(broker, { clientId: 'yok_st_viz_' + Math.random().toString(16).slice(2) });
 
         client.on('connect', () => {
@@ -300,10 +300,12 @@
         });
 
         client.on('message', (t, msg) => {
+            console.log('Incoming Topic:', t); // Log to console for debugging
             try {
                 const data = JSON.parse(msg.toString());
                 const parts = t.split('/');
-                const id = parts[4] || parts[3] || 'UNKNOWN';
+                // Try to find a meaningful ID in the topic structure
+                const id = parts.find(p => p !== 'DUSTBOY' && p !== 'status' && p !== 'model' && p !== 'v1' && p !== 'v2') || 'UNKNOWN';
 
                 if (!devices.has(id)) {
                     const towerData = createTower(id);
