@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D DUSTBOY | DATA CITY COMMAND</title>
+    <title>3D DUSTBOY | THE UPSIDE DOWN</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <style>
@@ -13,7 +13,7 @@
             background: #000;
             overflow: hidden;
             font-family: 'Fira Code', monospace;
-            color: #00f2ff;
+            color: #ff0000;
         }
 
         #overlay {
@@ -23,7 +23,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            background: radial-gradient(circle, transparent 20%, rgba(0, 0, 0, 0.8) 100%);
+            background: radial-gradient(circle, transparent 10%, rgba(0, 0, 0, 0.9) 100%);
             z-index: 5;
         }
 
@@ -37,15 +37,17 @@
         }
 
         #hud h1 {
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             margin: 0;
-            color: #ff004c;
-            text-shadow: 0 0 10px #ff004c;
+            color: #ff0000;
+            text-shadow: 0 0 15px #ff0000;
+            font-weight: 900;
         }
 
         #hud p {
             font-size: 0.7rem;
-            opacity: 0.7;
+            opacity: 0.6;
+            color: #ff4444;
         }
 
         #stats {
@@ -55,11 +57,13 @@
             text-align: right;
             z-index: 10;
             font-size: 0.7rem;
+            color: #ff4444;
         }
 
         .device-info {
             font-weight: bold;
             color: #fff;
+            text-shadow: 0 0 5px #ff0000;
         }
 
         #status-log {
@@ -69,12 +73,37 @@
             max-height: 150px;
             overflow: hidden;
             font-size: 0.6rem;
-            opacity: 0.5;
+            opacity: 0.4;
             z-index: 10;
+            color: #ff0000;
         }
 
         canvas {
             display: block;
+        }
+
+        /* Stranger Things Vignette & Noise */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 200px #000;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .noise {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 16;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Noise_Texture.png');
         }
 
         /* CRT Effect Overlay */
@@ -84,24 +113,40 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.1), rgba(0, 0, 0, 0), rgba(255, 0, 0, 0.1));
+            background-size: 100% 3px, 5px 100%;
             pointer-events: none;
             z-index: 20;
+        }
+
+        #classified-mark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 10vw;
+            font-weight: 900;
+            color: rgba(255, 0, 0, 0.03);
+            pointer-events: none;
+            z-index: 1;
+            user-select: none;
         }
     </style>
 </head>
 
 <body>
+    <div id="classified-mark">TOP_SECRET</div>
     <div id="overlay"></div>
+    <div class="vignette"></div>
+    <div class="noise"></div>
     <div class="scanlines"></div>
     <div id="hud">
-        <h1>DUSTBOY // DATA_CITY</h1>
-        <p>RE-IMAGINED DATA VISUALIZATION // PROTOCOL: WSS_MQTT</p>
+        <h1>DUSTBOY // THE_UPSIDE_DOWN</h1>
+        <p>CLASSIFIED DATA VISUALIZATION // Hawkins Lab Internal Network</p>
     </div>
     <div id="stats">
-        <div id="nodes-count">NODES_CONNECTED: 0</div>
+        <div id="nodes-count">NODES_IN_RIFT: 0</div>
         <div id="last-msg">LAST_SIGNAL: STANDBY</div>
     </div>
     <div id="status-log"></div>
@@ -109,41 +154,69 @@
     <script>
         // --- SCENE SETUP ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000000, 0.002);
+        scene.fog = new THREE.FogExp2(0x0a0000, 0.0015);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-        camera.position.set(200, 150, 200);
+        camera.position.set(300, 200, 300);
         camera.lookAt(0, 0, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x050000);
         document.body.appendChild(renderer.domElement);
 
         // --- LIGHTING ---
-        const ambientLight = new THREE.AmbientLight(0x000a11, 2);
+        const ambientLight = new THREE.AmbientLight(0x220000, 0.5);
         scene.add(ambientLight);
 
-        // --- HAWKINS DATA CORE ---
-        const coreGeo = new THREE.IcosahedronGeometry(20, 2);
-        const coreMat = new THREE.MeshPhongMaterial({
-            color: 0xff004c,
-            wireframe: true,
-            emissive: 0xff004c,
-            emissiveIntensity: 2
-        });
-        const core = new THREE.Mesh(coreGeo, coreMat);
-        core.position.y = 100;
-        scene.add(core);
+        // --- THE RIFT (Multi-layered Core) ---
+        const riftGroup = new THREE.Group();
+        riftGroup.position.y = 100;
+        scene.add(riftGroup);
 
-        const coreLight = new THREE.PointLight(0xff004c, 2, 500);
-        coreLight.position.copy(core.position);
-        scene.add(coreLight);
+        // Core 1: Inner Plasma
+        const innerGeo = new THREE.IcosahedronGeometry(15, 0);
+        const innerMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const innerCore = new THREE.Mesh(innerGeo, innerMat);
+        riftGroup.add(innerCore);
 
-        // --- GRID FLOOR ---
-        const gridHelper = new THREE.GridHelper(2000, 100, 0x111111, 0x050505);
+        // Core 2: Wireframe shell
+        const midGeo = new THREE.IcosahedronGeometry(25, 1);
+        const midMat = new THREE.MeshPhongMaterial({ color: 0x880000, wireframe: true, emissive: 0xff0000, emissiveIntensity: 1 });
+        const midCore = new THREE.Mesh(midGeo, midMat);
+        riftGroup.add(midCore);
+
+        // Core 3: Outer GLow
+        const outerGeo = new THREE.SphereGeometry(40, 32, 32);
+        const outerMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.1, side: THREE.BackSide });
+        const outerGlow = new THREE.Mesh(outerGeo, outerMat);
+        riftGroup.add(outerGlow);
+
+        const riftLight = new THREE.PointLight(0xff0000, 4, 800);
+        riftLight.position.copy(riftGroup.position);
+        scene.add(riftLight);
+
+        // --- ASH PARTICLE SYSTEM ---
+        const ashCount = 2000;
+        const ashGeo = new THREE.BufferGeometry();
+        const ashPositions = new Float32Array(ashCount * 3);
+        const ashSpeeds = new Float32Array(ashCount);
+
+        for (let i = 0; i < ashCount; i++) {
+            ashPositions[i * 3] = (Math.random() - 0.5) * 2000;
+            ashPositions[i * 3 + 1] = Math.random() * 500;
+            ashPositions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
+            ashSpeeds[i] = 0.1 + Math.random() * 0.3;
+        }
+        ashGeo.setAttribute('position', new THREE.BufferAttribute(ashPositions, 3));
+        const ashMat = new THREE.PointsMaterial({ color: 0xaaaaaa, size: 2, transparent: true, opacity: 0.6 });
+        const ashParticles = new THREE.Points(ashGeo, ashMat);
+        scene.add(ashParticles);
+
+        // --- GRID FLOOR (TENTACLE-ISH) ---
+        const gridHelper = new THREE.GridHelper(2000, 60, 0x330000, 0x110000);
         scene.add(gridHelper);
-
 
         // --- DEVICE DATA MANAGEMENT ---
         const devices = new Map();
@@ -153,56 +226,54 @@
         function createTower(id) {
             const group = new THREE.Group();
 
-            // Base geometry
-            const geometry = new THREE.BoxGeometry(10, 1, 10);
+            // Base geometry (Organic/Tech mix)
+            const geometry = new THREE.BoxGeometry(12, 1, 12);
             const material = new THREE.MeshPhongMaterial({
-                color: 0x00f2ff,
+                color: 0x000000,
                 transparent: true,
-                opacity: 0.8,
-                emissive: 0x00f2ff,
-                emissiveIntensity: 0.5
+                opacity: 0.9,
+                emissive: 0xff0000,
+                emissiveIntensity: 0.2
             });
 
             const towerMesh = new THREE.Mesh(geometry, material);
             towerMesh.position.y = 0.5;
             group.add(towerMesh);
 
-            // Cap / Neon outline
+            // Red Outline
             const edges = new THREE.EdgesGeometry(geometry);
-            const lineMat = new THREE.LineBasicMaterial({ color: 0xff004c });
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
             const outline = new THREE.LineSegments(edges, lineMat);
             outline.position.y = 0.5;
             group.add(outline);
 
-            // Pulsing Ring (initially scaled to 0)
-            const ringGeo = new THREE.RingGeometry(8, 10, 32);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff004c, transparent: true, opacity: 0, side: THREE.DoubleSide });
+            // Pulsing Ring (Ash Ring)
+            const ringGeo = new THREE.RingGeometry(12, 15, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, side: THREE.DoubleSide });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             ring.rotation.x = Math.PI / 2;
-            ring.position.y = 0.5;
             group.add(ring);
 
-            // Floating Label (Visual representation)
-            const glowGeo = new THREE.SphereGeometry(2, 8, 8);
-            const glowMat = new THREE.MeshBasicMaterial({ color: 0xff004c });
+            // Signal Light
+            const glowGeo = new THREE.SphereGeometry(3, 8, 8);
+            const glowMat = new THREE.MeshBasicMaterial({ color: 0xff4400 });
             const glow = new THREE.Mesh(glowGeo, glowMat);
-            glow.position.y = 20; // Will be animated
             group.add(glow);
 
             // Random grid position
-            const spread = 800;
+            const spread = 1200;
             group.position.set(
                 (Math.random() - 0.5) * spread,
                 0,
                 (Math.random() - 0.5) * spread
             );
 
-            // Data Beam (line to core)
+            // Data Beam (Flickering red line to Rift)
             const beamGeo = new THREE.BufferGeometry().setFromPoints([
                 new THREE.Vector3(0, 0, 0),
-                new THREE.Vector3(0, 0, 0) // Target will be core
+                new THREE.Vector3(0, 0, 0)
             ]);
-            const beamMat = new THREE.LineBasicMaterial({ color: 0xff004c, transparent: true, opacity: 0 });
+            const beamMat = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
             const beam = new THREE.Line(beamGeo, beamMat);
             scene.add(beam);
 
@@ -211,22 +282,21 @@
 
         function triggerPulse(towerData) {
             towerData.ring.scale.set(1, 1, 1);
-            towerData.ring.material.opacity = 0.8;
-            towerData.glow.material.color.set(0xff004c);
+            towerData.ring.material.opacity = 1;
+            towerData.beam.material.opacity = 0.8;
+            towerData.glow.material.color.set(0xff0000);
 
-            // Set beam visibility
-            towerData.beam.material.opacity = 0.5;
+            // Camera shake effect if close? (Maybe later)
         }
 
         // --- MQTT SETUP ---
         const broker = 'wss://dustboy-wss-bridge.laris.workers.dev/mqtt';
         const topic = 'DUSTBOY/+/+/+/status';
-        const client = mqtt.connect(broker, { clientId: 'byler_3d_viz_' + Math.random().toString(16).slice(2) });
+        const client = mqtt.connect(broker, { clientId: 'yok_st_viz_' + Math.random().toString(16).slice(2) });
 
         client.on('connect', () => {
-            console.log('Connected to DustBoy Grid');
+            logSystem('SECURE_LINK_ESTABLISHED: ' + broker);
             client.subscribe(topic);
-            logSystem('LINK_ESTABLISHED: ' + broker);
         });
 
         client.on('message', (t, msg) => {
@@ -239,19 +309,18 @@
                     const towerData = createTower(id);
                     devices.set(id, towerData);
                     towers.add(towerData.group);
-                    document.getElementById('nodes-count').textContent = 'NODES_CONNECTED: ' + devices.size;
+                    document.getElementById('nodes-count').textContent = 'NODES_IN_RIFT: ' + devices.size;
                 }
 
                 const towerData = devices.get(id);
-                // Dynamic height based on Uptime (logarithmic scale) or just randomize for visual "life"
-                towerData.targetHeight = Math.min(200, 20 + (Math.log10(data.up || 1) * 20));
+                towerData.targetHeight = Math.min(300, 30 + (Math.log10(data.up || 1) * 30));
 
                 triggerPulse(towerData);
-                document.getElementById('last-msg').innerHTML = `SIGNAL_DETECTION: <span class="device-info">${id}</span> // ADDR: ${data.ip}`;
-                logSystem(`DATA_INBOUND [${id}]`);
+                document.getElementById('last-msg').innerHTML = `RIFT_SIGNAL: <span class="device-info">${id}</span> // ADDR: ${data.ip}`;
+                logSystem(`SIGNAL_DETECTED [${id}]`);
 
             } catch (e) {
-                console.error('Parse error', e);
+                console.error('Signal corrupted', e);
             }
         });
 
@@ -260,11 +329,10 @@
             const d = document.createElement('div');
             d.textContent = `> ${msg}`;
             el.prepend(d);
-            if (el.children.length > 10) el.removeChild(el.lastChild);
+            if (el.children.length > 20) el.removeChild(el.lastChild);
         }
 
         // --- ANIMATION LOOP ---
-        let autoRotate = true;
         let angle = 0;
 
         function animate() {
@@ -272,22 +340,33 @@
 
             const time = Date.now() * 0.001;
 
-            // Animate Core
-            core.rotation.y += 0.01;
-            core.rotation.x += 0.005;
-            core.scale.setScalar(1 + Math.sin(time * 3) * 0.1);
+            // Animate Rift
+            innerCore.rotation.y += 0.05;
+            midCore.rotation.z -= 0.02;
+            midCore.rotation.x += 0.01;
+            midCore.scale.setScalar(1 + Math.sin(time * 5) * 0.05);
+            outerGlow.scale.setScalar(1.2 + Math.sin(time * 2) * 0.2);
+            riftLight.intensity = 3 + Math.sin(time * 10) * 1;
+
+            // Animate Ash
+            const pos = ashParticles.geometry.attributes.position.array;
+            for (let i = 0; i < ashCount; i++) {
+                pos[i * 3 + 1] -= ashSpeeds[i];
+                pos[i * 3] += Math.sin(time + i) * 0.2;
+                if (pos[i * 3 + 1] < 0) pos[i * 3 + 1] = 500;
+            }
+            ashParticles.geometry.attributes.position.needsUpdate = true;
 
             // Animate Towers
             devices.forEach((tData) => {
-                // Smooth height transition
-                tData.currentHeight += (tData.targetHeight - tData.currentHeight) * 0.1;
+                tData.currentHeight += (tData.targetHeight - tData.currentHeight) * 0.05;
                 tData.mesh.scale.y = tData.currentHeight;
                 tData.mesh.position.y = tData.currentHeight / 2;
 
                 tData.outline.scale.y = tData.currentHeight;
                 tData.outline.position.y = tData.currentHeight / 2;
 
-                const glowY = tData.currentHeight + 5 + Math.sin(time * 2) * 5;
+                const glowY = tData.currentHeight + 10 + Math.sin(time * 4) * 5;
                 tData.glow.position.y = glowY;
 
                 // Update Beam Positions
@@ -296,31 +375,31 @@
 
                 tData.beam.geometry.setFromPoints([
                     worldPos,
-                    core.position
+                    riftGroup.position
                 ]);
 
                 if (tData.beam.material.opacity > 0) {
-                    tData.beam.material.opacity -= 0.01;
+                    tData.beam.material.opacity -= 0.005;
+                    // Add flickering
+                    tData.beam.material.opacity *= (0.9 + Math.random() * 0.2);
                 }
 
-                // Animate Rings (Fade and Expand)
+                // Animate Rings
                 if (tData.ring.material.opacity > 0) {
-                    tData.ring.scale.x += 0.5;
-                    tData.ring.scale.y += 0.5;
-                    tData.ring.material.opacity -= 0.02;
+                    tData.ring.scale.x += 1;
+                    tData.ring.scale.y += 1;
+                    tData.ring.material.opacity -= 0.01;
                     tData.ring.position.y = tData.currentHeight;
                 }
             });
 
-            // Camera Motion
-            if (autoRotate) {
-                angle += 0.002;
-                const dist = 600;
-                camera.position.x = Math.cos(angle) * dist;
-                camera.position.z = Math.sin(angle) * dist;
-                camera.position.y = 300 + Math.sin(time * 0.5) * 100;
-                camera.lookAt(0, 50, 0);
-            }
+            // Camera Orbit
+            angle += 0.0015;
+            const dist = 700 + Math.sin(time * 0.3) * 100;
+            camera.position.x = Math.cos(angle) * dist;
+            camera.position.z = Math.sin(angle) * dist;
+            camera.position.y = 250 + Math.cos(time * 0.2) * 50;
+            camera.lookAt(0, 80, 0);
 
             renderer.render(scene, camera);
         }
