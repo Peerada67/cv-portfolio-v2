@@ -407,7 +407,7 @@
         controls.enablePan = true;
         controls.enableZoom = true;
         controls.screenSpacePanning = true;
-        controls.minDistance = 100;
+        controls.minDistance = 50;
         controls.maxDistance = 3000;
         controls.mouseButtons = {
             LEFT: THREE.MOUSE.ROTATE,
@@ -415,35 +415,48 @@
             RIGHT: THREE.MOUSE.PAN
         };
 
-        // --- THE MIND FLAYER (CORE ENTITY) ---
-        const flayerGroup = new THREE.Group();
-        scene.add(flayerGroup);
+        // --- HAWKINS LAB (CENTRAL ENTITY) ---
+        const labGroup = new THREE.Group();
+        scene.add(labGroup);
 
-        // Advanced Shader-ish Material for the entity
-        const entityGeo = new THREE.SphereGeometry(60, 64, 64);
-        const entityMat = new THREE.MeshPhongMaterial({
-            color: 0x000000,
-            emissive: 0xff0000,
-            emissiveIntensity: 0.4,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.6
-        });
-        const entity = new THREE.Mesh(entityGeo, entityMat);
-        flayerGroup.add(entity);
+        // Main Building Block
+        const mainGeo = new THREE.BoxGeometry(120, 100, 180);
+        const labMat = new THREE.MeshPhongMaterial({ color: 0x111111, emissive: 0x110000 });
+        const mainBuilding = new THREE.Mesh(mainGeo, labMat);
+        labGroup.add(mainBuilding);
 
-        // Tentacle-like inner layers
-        const innerLayer = new THREE.Mesh(
-            new THREE.TorusKnotGeometry(40, 15, 128, 16),
-            new THREE.MeshBasicMaterial({ color: 0x660000, wireframe: true, transparent: true, opacity: 0.3 })
-        );
-        flayerGroup.add(innerLayer);
+        // Side Wing
+        const wingGeo = new THREE.BoxGeometry(60, 60, 60);
+        const wing = new THREE.Mesh(wingGeo, labMat);
+        wing.position.set(90, -20, 0);
+        labGroup.add(wing);
 
-        const outerLayer = new THREE.Mesh(
-            new THREE.IcosahedronGeometry(120, 1),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.1 })
-        );
-        flayerGroup.add(outerLayer);
+        // Tower / Antenna
+        const towerGeo = new THREE.BoxGeometry(20, 120, 20);
+        const tower = new THREE.Mesh(towerGeo, labMat);
+        tower.position.set(-40, 60, -60);
+        labGroup.add(tower);
+
+        // Glowing Windows (The Experiment Rooms)
+        for (let i = 0; i < 40; i++) {
+            const winGeo = new THREE.BoxGeometry(5, 5, 2);
+            const winMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8 });
+            const win = new THREE.Mesh(winGeo, winMat);
+            // Randomly place on building faces
+            if (Math.random() > 0.5) {
+                win.position.set(60.5, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 160);
+            } else {
+                win.position.set((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 80, 90.5);
+                win.rotation.y = Math.PI / 2;
+            }
+            labGroup.add(win);
+        }
+
+        // Rift Effect around lab
+        const riftGeo = new THREE.TorusKnotGeometry(180, 2, 128, 16);
+        const riftMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.1 });
+        const rift = new THREE.Mesh(riftGeo, riftMat);
+        labGroup.add(rift);
 
         // Core glow
         const coreLight = new THREE.PointLight(0xff0000, 10, 1500);
@@ -646,19 +659,10 @@
             const elapsed = clock.getElapsedTime();
             controls.update();
 
-            // Mind Flayer Motion
-            entity.rotation.y += 0.01;
-            entity.rotation.z += 0.005;
-            innerLayer.rotation.x += 0.02;
-            innerLayer.rotation.z -= 0.01;
-            outerLayer.rotation.y -= 0.005;
-
-            const coreScale = 1 + (avgPm / 500) + Math.sin(elapsed * 2) * 0.05;
-            entity.scale.setScalar(coreScale);
-            innerLayer.scale.setScalar(0.8 + Math.sin(elapsed * 3) / 10);
-            outerLayer.scale.setScalar(coreScale * 1.2);
-
-            entityMat.emissiveIntensity = 0.5 + Math.sin(elapsed * 4) * 0.3;
+            // labGroup Animation
+            labGroup.rotation.y += 0.005;
+            const pulse = 1 + Math.sin(elapsed * 2) * 0.02;
+            labGroup.scale.setScalar(pulse);
             cloud.rotation.y -= 0.002;
 
             // Ash system
