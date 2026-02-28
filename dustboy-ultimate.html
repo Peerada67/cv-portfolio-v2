@@ -210,10 +210,10 @@
         }
 
         #view-presets {
-            top: 20px;
-            right: 20px;
+            margin-top: 15px;
             display: flex;
             gap: 10px;
+            pointer-events: auto;
         }
 
         .btn {
@@ -311,6 +311,10 @@
             <h1>MIND_FLAYER // PROTOCOL</h1>
             <p>PROJECT_NINA // DUSTBOY_REALTIME_INTRUSION // NODE_NET_01<br>STATUS: <b>DEEP_COLLECT_ENABLED</b> //
                 SOURCE: LARIS_WSS_BRIDGE</p>
+            <div id="view-presets">
+                <button class="btn" onclick="setCam('auto')">Auto_Orbit</button>
+                <button class="btn" onclick="setCam('core')">The_Abyss</button>
+            </div>
         </div>
 
         <div id="node-detail" class="hud-panel">
@@ -322,11 +326,6 @@
             <div style="font-size: 0.6rem; margin-top: 10px; opacity: 0.5;">PROPERTY_OF_DOE // DO_NOT_DISTRIBUTE</div>
         </div>
 
-        <div id="view-presets"
-            style="position:absolute; bottom: 20px; left: 400px; display:flex; gap:10px; pointer-events:auto;">
-            <button class="btn" onclick="setCam('auto')">Auto_Orbit</button>
-            <button class="btn" onclick="setCam('core')">The_Abyss</button>
-        </div>
 
         <div id="dossier-sidebar">
             <!-- Dynamic Cards Go Here -->
