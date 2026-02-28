@@ -43,6 +43,108 @@
             pointer-events: auto;
         }
 
+        #dossier-sidebar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            height: calc(100% - 150px);
+            overflow-y: auto;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 15px;
+            z-index: 30;
+        }
+
+        #dossier-sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #dossier-sidebar::-webkit-scrollbar-thumb {
+            background: var(--st-red);
+        }
+
+        .dossier-card {
+            background: rgba(15, 0, 0, 0.9);
+            border: 1px solid var(--st-dark-red);
+            padding: 12px;
+            transition: 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border-left: 2px solid var(--st-dark-red);
+        }
+
+        .dossier-card:hover {
+            border-color: var(--st-red);
+            background: rgba(30, 0, 0, 0.95);
+            box-shadow: 0 0 15px var(--st-glow);
+        }
+
+        .dossier-card.active {
+            border-color: var(--st-red);
+            border-left: 5px solid var(--st-red);
+            background: rgba(50, 0, 0, 0.9);
+        }
+
+        .dossier-card h3 {
+            margin: 0 0 8px;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            color: #fff;
+            border-bottom: 1px solid #400;
+            padding-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .dossier-stat {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            margin-bottom: 3px;
+        }
+
+        .dossier-label {
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .dossier-val {
+            color: var(--st-red);
+            font-weight: bold;
+        }
+
+        .pulse-light {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            background: var(--st-red);
+            border-radius: 50%;
+            display: none;
+            box-shadow: 0 0 10px var(--st-red);
+        }
+
+        @keyframes signal-glow {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(2.5);
+            }
+        }
+
+        .pulsing .pulse-light {
+            display: block;
+            animation: signal-glow 0.6s ease-out;
+        }
+
         #header {
             top: 20px;
             left: 20px;
@@ -220,10 +322,14 @@
             <div style="font-size: 0.6rem; margin-top: 10px; opacity: 0.5;">PROPERTY_OF_DOE // DO_NOT_DISTRIBUTE</div>
         </div>
 
-        <div id="view-presets">
+        <div id="view-presets"
+            style="position:absolute; bottom: 20px; left: 400px; display:flex; gap:10px; pointer-events:auto;">
             <button class="btn" onclick="setCam('auto')">Auto_Orbit</button>
-            <button class="btn" onclick="setCam('node')">Focus_Node</button>
             <button class="btn" onclick="setCam('core')">The_Abyss</button>
+        </div>
+
+        <div id="dossier-sidebar">
+            <!-- Dynamic Cards Go Here -->
         </div>
 
         <div id="stats-panel" class="hud-panel">
@@ -357,12 +463,45 @@
             label.innerHTML = `NODE: <b>${id}</b><br>PM2.5: <span class="pm-val">--</span>`;
             labelsContainer.appendChild(label);
 
+            // Dossier Card (Sidebar)
+            const card = document.createElement('div');
+            card.className = 'dossier-card';
+            card.innerHTML = `
+                <div class="pulse-light"></div>
+                <h3>SIGNAL_SOURCE: ${id}</h3>
+                <div class="dossier-stat"><span class="dossier-label">PM2.5_LEVEL</span><span class="dossier-val pm25-val">0.0</span></div>
+                <div class="dossier-stat"><span class="dossier-label">PM10_LEVEL</span><span class="dossier-val pm10-val">0.0</span></div>
+                <div class="dossier-stat"><span class="dossier-label">UPTIME</span><span class="dossier-val uptime-val">0.0h</span></div>
+            `;
+            card.onclick = () => focusNode(id);
+            document.getElementById('dossier-sidebar').appendChild(card);
+
             // Randomized initial orbit
             const radius = 400 + Math.random() * 600;
             const angle = Math.random() * Math.PI * 2;
             const speed = 0.002 + Math.random() * 0.005;
 
-            return { group, orb, ring, beam, label, radius, angle, speed, pm25: 0, lastSignal: 0 };
+            return { group, orb, ring, beam, label, card, radius, angle, speed, pm25: 0, lastSignal: 0 };
+        }
+
+        function focusNode(id) {
+            const n = nodes.get(id);
+            if (!n) return;
+
+            document.querySelectorAll('.dossier-card').forEach(c => c.classList.remove('active'));
+            n.card.classList.add('active');
+
+            const targetPos = new THREE.Vector3();
+            n.group.getWorldPosition(targetPos);
+
+            // Smoother camera transition
+            controls.autoRotate = false;
+            const offset = new THREE.Vector3(150, 100, 150);
+            camera.position.copy(targetPos).add(offset);
+            controls.target.copy(targetPos);
+
+            showDossier(id, n);
+            logConsole(`COMMAND: FOCUS_LOCKED_ON [${id}]`);
         }
 
         // --- MQTT CONNECTION ---
@@ -388,18 +527,30 @@
                 }
 
                 const node = nodes.get(id);
-                const pm = data.pm25 || data.pm10 || 0;
-                node.pm25 = pm;
+                const pm25 = data.pm25 || data.pm10 || 0;
+                const pm10 = data.pm10 || 0;
+                const uptime = data.up ? (data.up / 3600).toFixed(1) : "0.0";
+
+                node.pm25 = pm25;
                 node.lastSignal = Date.now();
 
-                // Visual feedback
+                // Visual feedback (3D)
                 node.ring.scale.set(1, 1, 1);
                 node.ring.material.opacity = 1;
-                node.beam.material.opacity = 0.4;
+                node.beam.material.opacity = 0.6;
+                node.label.querySelector('.pm-val').textContent = pm25;
 
-                node.label.querySelector('.pm-val').textContent = pm;
+                // UI Feedback (Dossier Card)
+                node.card.querySelector('.pm25-val').textContent = pm25;
+                node.card.querySelector('.pm10-val').textContent = pm25; // PM10 often mapped to same in simplified UI
+                node.card.querySelector('.uptime-val').textContent = uptime + "h";
 
-                logConsole(`SIGNAL_INTRUSION: [${id}] PM=${pm}`);
+                // Pulsing Effect
+                node.card.classList.remove('pulsing');
+                void node.card.offsetWidth; // Trigger reflow
+                node.card.classList.add('pulsing');
+
+                logConsole(`SIGNAL_INTRUSION: [${id}] PM=${pm25}`);
                 updateGlobalStats();
             } catch (e) { }
         });
