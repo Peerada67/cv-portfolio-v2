@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S01E01: WORKSHOP_FINALE | CLASSIFIED_REPORT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@300;400;500&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg: #050505;
+            --field-bg: #0a0a0a;
+            --accent: #ff004c;
+            --text: #e0e0e0;
+            --sub-text: #888;
+            --border: #1a1a1a;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Crimson Text', serif;
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Noise_Texture.png');
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .report-card {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--field-bg);
+            border: 1px solid var(--border);
+            padding: 60px;
+            position: relative;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+        }
+
+        header {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        .classified-stamp {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            border: 4px solid var(--accent);
+            color: var(--accent);
+            padding: 5px 15px;
+            font-family: 'Fira Code', monospace;
+            font-weight: bold;
+            transform: rotate(5deg);
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .meta {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--sub-text);
+            margin-top: 10px;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .log-item {
+            display: flex;
+            margin-bottom: 15px;
+            font-family: 'Noto Sans Thai', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .time {
+            min-width: 120px;
+            font-family: 'Fira Code', monospace;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .tired-meter {
+            height: 4px;
+            background: #111;
+            width: 100%;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .tired-fill {
+            height: 100%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.7rem;
+            opacity: 0.4;
+        }
+
+        ul {
+            padding-left: 20px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        strong {
+            color: var(--accent);
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .link-card {
+            border: 1px solid var(--border);
+            padding: 15px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+        }
+
+        .link-card:hover {
+            border-color: var(--accent);
+            background: rgba(255, 0, 76, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grain"></div>
+    <div class="report-card">
+        <div class="classified-stamp">TOP_SECRET</div>
+        <header>
+            <h1>SESSION_RETROSPECTIVE</h1>
+            <div class="meta">DATE: 2026-02-28 // AGENT: BYLER_ORACLE // SUBJECT: YOK_WORKSHOP</div>
+        </header>
+
+        <section>
+            <h2>// 01. TIMELINE_LOG [ACTIVITY_FEED]</h2>
+            <div class="log-item">
+                <div class="time">09:00 - 11:30</div>
+                <div class="desc">
+                    <strong>Phase: THE AWAKENING</strong><br>
+                    เริ่มต้นเช้าวันใหม่ด้วยการออกแบบ Portfolio และ CV ให้คุณหยก เน้นความ Minimalist
+                    และจัดการข้อมูลการศึกษา/ประสบการณ์ให้ครบถ้วน
+                </div>
+            </div>
+            <div class="log-item">
+                <div class="time">13:00 - 14:30</div>
+                <div class="desc">
+                    <strong>Phase: THE UPSIDE DOWN</strong><br>
+                    Redesign หน้าเว็บให้เป็นธีม "Stranger Things" ล้ำๆ ใส่เอฟเฟกต์ Grain, Scanlines และสร้างรถไฟ 3D
+                    วิ่งตามเส้นทาง GPS จากลำพูนไปพิษณุโลก
+                </div>
+            </div>
+            <div class="log-item">
+                <div class="time">15:00 - 16:00</div>
+                <div class="desc">
+                    <strong>Phase: THE DATA CITY</strong><br>
+                    สร้าง 3D Data Visualization สำหรับ DustBoy ให้ข้อมูลกลายเป็นเมืองแสงสี Neon และสรุปรายงานทั้งหมดขึ้น
+                    GitHub Pages
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>// 02. SUBJECT_CONDITION [TIREDNESS_LEVEL]</h2>
+            <p style="font-size: 0.9rem; font-family: 'Noto Sans Thai', sans-serif;">
+                สถานะปัจจุบันของ Agent: <strong>"ภูเขาที่ยังตั้งตระหง่าน แต่หิมะเริ่มตกหนัก"</strong><br>
+                ความเหนื่อยล้าอยู่ที่ 85% เพราะการสร้างเมืองและรถไฟ 3D ใช้พลังงานสมองมหาศาล
+                แต่ความภูมิใจในผลงานที่สวยงามทำให้ยังยืนหยัดอยู่ได้ครับ!
+            </p>
+            <div class="tired-meter">
+                <div class="tired-fill" style="width: 85%;"></div>
+            </div>
+        </section>
+
+        <section>
+            <h2>// 03. MISSION_ASSETS [DEPLOYED_LINKS]</h2>
+            <div class="links-grid">
+                <a href="index.html" class="link-card">📁 STRANGER_THINGS_DOSSIER</a>
+                <a href="travel-3d.html" class="link-card">🚂 3D_TRAIN_ADVENTURE</a>
+                <a href="dustboy-3d.html" class="link-card">🏙️ DUSTBOY_DATA_CITY</a>
+                <a href="dustboy-monitor.html" class="link-card">📊 LIVE_SENSOR_MONITOR</a>
+            </div>
+        </section>
+
+        <section>
+            <h2>// 04. AGENT_NOTE</h2>
+            <ul style="font-family: 'Noto Sans Thai', sans-serif;">
+                <li>สร้างผลงาน 3D สวยงามได้ถึง 2 ชิ้น (รถไฟ และ เมืองข้อมูล)</li>
+                <li>จัดการระบบ Git และ Deployment ได้สำเร็จแม้อยู่ในโครงสร้างที่ซับซ้อน</li>
+                <li>วันนี้เป็นวันที่ Oracle Byler และคุณหยก ทำงานร่วมกันได้อย่างยอดเยี่ยมที่สุดครับ!</li>
+            </ul>
+        </section>
+
+        <div class="footer">
+            // END_OF_FILE // NOTHING_IS_DELETED // BYLER_OUT
+        </div>
+    </div>
+</body>
+
+</html>
