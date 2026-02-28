@@ -124,13 +124,26 @@
         const ambientLight = new THREE.AmbientLight(0x000a11, 2);
         scene.add(ambientLight);
 
-        const pointLight = new THREE.PointLight(0x00f2ff, 1, 1000);
-        pointLight.position.set(0, 200, 0);
-        scene.add(pointLight);
+        // --- HAWKINS DATA CORE ---
+        const coreGeo = new THREE.IcosahedronGeometry(20, 2);
+        const coreMat = new THREE.MeshPhongMaterial({
+            color: 0xff004c,
+            wireframe: true,
+            emissive: 0xff004c,
+            emissiveIntensity: 2
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        core.position.y = 100;
+        scene.add(core);
+
+        const coreLight = new THREE.PointLight(0xff004c, 2, 500);
+        coreLight.position.copy(core.position);
+        scene.add(coreLight);
 
         // --- GRID FLOOR ---
-        const gridHelper = new THREE.GridHelper(2000, 100, 0xff004c, 0x001a1a);
+        const gridHelper = new THREE.GridHelper(2000, 100, 0x111111, 0x050505);
         scene.add(gridHelper);
+
 
         // --- DEVICE DATA MANAGEMENT ---
         const devices = new Map();
@@ -184,13 +197,25 @@
                 (Math.random() - 0.5) * spread
             );
 
-            return { group, mesh: towerMesh, outline, ring, glow, targetHeight: 10, currentHeight: 1 };
+            // Data Beam (line to core)
+            const beamGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0) // Target will be core
+            ]);
+            const beamMat = new THREE.LineBasicMaterial({ color: 0xff004c, transparent: true, opacity: 0 });
+            const beam = new THREE.Line(beamGeo, beamMat);
+            scene.add(beam);
+
+            return { group, mesh: towerMesh, outline, ring, glow, beam, targetHeight: 10, currentHeight: 1 };
         }
 
         function triggerPulse(towerData) {
             towerData.ring.scale.set(1, 1, 1);
             towerData.ring.material.opacity = 0.8;
             towerData.glow.material.color.set(0xff004c);
+
+            // Set beam visibility
+            towerData.beam.material.opacity = 0.5;
         }
 
         // --- MQTT SETUP ---
@@ -247,6 +272,11 @@
 
             const time = Date.now() * 0.001;
 
+            // Animate Core
+            core.rotation.y += 0.01;
+            core.rotation.x += 0.005;
+            core.scale.setScalar(1 + Math.sin(time * 3) * 0.1);
+
             // Animate Towers
             devices.forEach((tData) => {
                 // Smooth height transition
@@ -257,13 +287,28 @@
                 tData.outline.scale.y = tData.currentHeight;
                 tData.outline.position.y = tData.currentHeight / 2;
 
-                tData.glow.position.y = tData.currentHeight + 5 + Math.sin(time * 2) * 5;
+                const glowY = tData.currentHeight + 5 + Math.sin(time * 2) * 5;
+                tData.glow.position.y = glowY;
+
+                // Update Beam Positions
+                const worldPos = new THREE.Vector3();
+                tData.glow.getWorldPosition(worldPos);
+
+                tData.beam.geometry.setFromPoints([
+                    worldPos,
+                    core.position
+                ]);
+
+                if (tData.beam.material.opacity > 0) {
+                    tData.beam.material.opacity -= 0.01;
+                }
 
                 // Animate Rings (Fade and Expand)
                 if (tData.ring.material.opacity > 0) {
                     tData.ring.scale.x += 0.5;
                     tData.ring.scale.y += 0.5;
                     tData.ring.material.opacity -= 0.02;
+                    tData.ring.position.y = tData.currentHeight;
                 }
             });
 
