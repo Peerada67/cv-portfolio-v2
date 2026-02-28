@@ -532,9 +532,6 @@
             document.getElementById('dtl-coords').textContent = `${n.group.position.x.toFixed(0)}, ${n.group.position.z.toFixed(0)}`;
         }
 
-        renderer.render(scene, camera);
-        }
-
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
