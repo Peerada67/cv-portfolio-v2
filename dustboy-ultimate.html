@@ -451,8 +451,15 @@
             // Mind Flayer Motion
             entity.rotation.y += 0.01;
             entity.rotation.z += 0.005;
+            innerLayer.rotation.x += 0.02;
+            innerLayer.rotation.z -= 0.01;
+            outerLayer.rotation.y -= 0.005;
+
             const coreScale = 1 + (avgPm / 500) + Math.sin(elapsed * 2) * 0.05;
             entity.scale.setScalar(coreScale);
+            innerLayer.scale.setScalar(0.8 + Math.sin(elapsed * 3) / 10);
+            outerLayer.scale.setScalar(coreScale * 1.2);
+
             entityMat.emissiveIntensity = 0.5 + Math.sin(elapsed * 4) * 0.3;
             cloud.rotation.y -= 0.002;
 
@@ -465,7 +472,7 @@
             ashSystem.geometry.attributes.position.needsUpdate = true;
 
             // Nodes & Labels
-            nodes.forEach(n => {
+            nodes.forEach((n, id) => {
                 // Orbit
                 n.angle += n.speed * (1 + (n.pm25 / 100));
                 const targetX = Math.cos(n.angle) * n.radius;
@@ -496,15 +503,36 @@
                 if (projectVec.z > 1) {
                     n.label.style.display = 'none';
                 } else {
-                    n.label.style.display = 'block';
-                    n.label.style.left = x + 'px';
-                    n.label.style.top = (y - 20) + 'px';
                     const dist = camera.position.distanceTo(wPos);
-                    n.label.style.opacity = Math.max(0, 1 - dist / 2000);
+                    if (dist < 2000) {
+                        n.label.style.display = 'block';
+                        n.label.style.left = x + 'px';
+                        n.label.style.top = (y - 20) + 'px';
+                        n.label.style.opacity = Math.max(0, 1 - dist / 2000);
+                    } else {
+                        n.label.style.display = 'none';
+                    }
+                }
+
+                // Auto-show high PM nodes in dossier
+                if (n.pm25 > 50 && n.lastSignal > Date.now() - 5000) {
+                    showDossier(id, n);
                 }
             });
 
             renderer.render(scene, camera);
+        }
+
+        function showDossier(id, n) {
+            const panel = document.getElementById('node-detail');
+            panel.style.display = 'block';
+            document.getElementById('dtl-id').textContent = id;
+            document.getElementById('dtl-pm').textContent = n.pm25;
+            document.getElementById('dtl-up').textContent = "SIGNAL_STABLE";
+            document.getElementById('dtl-coords').textContent = `${n.group.position.x.toFixed(0)}, ${n.group.position.z.toFixed(0)}`;
+        }
+
+        renderer.render(scene, camera);
         }
 
         window.addEventListener('resize', () => {
