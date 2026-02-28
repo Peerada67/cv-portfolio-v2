@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D DUSTBOY | DATA CITY COMMAND</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Fira Code', monospace;
+            color: #00f2ff;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 20%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 5;
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #hud h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: #ff004c;
+            text-shadow: 0 0 10px #ff004c;
+        }
+
+        #hud p {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        #stats {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            text-align: right;
+            z-index: 10;
+            font-size: 0.7rem;
+        }
+
+        .device-info {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        #status-log {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            max-height: 150px;
+            overflow: hidden;
+            font-size: 0.6rem;
+            opacity: 0.5;
+            z-index: 10;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* CRT Effect Overlay */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="overlay"></div>
+    <div class="scanlines"></div>
+    <div id="hud">
+        <h1>DUSTBOY // DATA_CITY</h1>
+        <p>RE-IMAGINED DATA VISUALIZATION // PROTOCOL: WSS_MQTT</p>
+    </div>
+    <div id="stats">
+        <div id="nodes-count">NODES_CONNECTED: 0</div>
+        <div id="last-msg">LAST_SIGNAL: STANDBY</div>
+    </div>
+    <div id="status-log"></div>
+
+    <script>
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.set(200, 150, 200);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // --- LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0x000a11, 2);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0x00f2ff, 1, 1000);
+        pointLight.position.set(0, 200, 0);
+        scene.add(pointLight);
+
+        // --- GRID FLOOR ---
+        const gridHelper = new THREE.GridHelper(2000, 100, 0xff004c, 0x001a1a);
+        scene.add(gridHelper);
+
+        // --- DEVICE DATA MANAGEMENT ---
+        const devices = new Map();
+        const towers = new THREE.Group();
+        scene.add(towers);
+
+        function createTower(id) {
+            const group = new THREE.Group();
+
+            // Base geometry
+            const geometry = new THREE.BoxGeometry(10, 1, 10);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00f2ff,
+                transparent: true,
+                opacity: 0.8,
+                emissive: 0x00f2ff,
+                emissiveIntensity: 0.5
+            });
+
+            const towerMesh = new THREE.Mesh(geometry, material);
+            towerMesh.position.y = 0.5;
+            group.add(towerMesh);
+
+            // Cap / Neon outline
+            const edges = new THREE.EdgesGeometry(geometry);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xff004c });
+            const outline = new THREE.LineSegments(edges, lineMat);
+            outline.position.y = 0.5;
+            group.add(outline);
+
+            // Pulsing Ring (initially scaled to 0)
+            const ringGeo = new THREE.RingGeometry(8, 10, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff004c, transparent: true, opacity: 0, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = 0.5;
+            group.add(ring);
+
+            // Floating Label (Visual representation)
+            const glowGeo = new THREE.SphereGeometry(2, 8, 8);
+            const glowMat = new THREE.MeshBasicMaterial({ color: 0xff004c });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            glow.position.y = 20; // Will be animated
+            group.add(glow);
+
+            // Random grid position
+            const spread = 800;
+            group.position.set(
+                (Math.random() - 0.5) * spread,
+                0,
+                (Math.random() - 0.5) * spread
+            );
+
+            return { group, mesh: towerMesh, outline, ring, glow, targetHeight: 10, currentHeight: 1 };
+        }
+
+        function triggerPulse(towerData) {
+            towerData.ring.scale.set(1, 1, 1);
+            towerData.ring.material.opacity = 0.8;
+            towerData.glow.material.color.set(0xff004c);
+        }
+
+        // --- MQTT SETUP ---
+        const broker = 'wss://dustboy-wss-bridge.laris.workers.dev/mqtt';
+        const topic = 'DUSTBOY/+/+/+/status';
+        const client = mqtt.connect(broker, { clientId: 'byler_3d_viz_' + Math.random().toString(16).slice(2) });
+
+        client.on('connect', () => {
+            console.log('Connected to DustBoy Grid');
+            client.subscribe(topic);
+            logSystem('LINK_ESTABLISHED: ' + broker);
+        });
+
+        client.on('message', (t, msg) => {
+            try {
+                const data = JSON.parse(msg.toString());
+                const parts = t.split('/');
+                const id = parts[4] || parts[3] || 'UNKNOWN';
+
+                if (!devices.has(id)) {
+                    const towerData = createTower(id);
+                    devices.set(id, towerData);
+                    towers.add(towerData.group);
+                    document.getElementById('nodes-count').textContent = 'NODES_CONNECTED: ' + devices.size;
+                }
+
+                const towerData = devices.get(id);
+                // Dynamic height based on Uptime (logarithmic scale) or just randomize for visual "life"
+                towerData.targetHeight = Math.min(200, 20 + (Math.log10(data.up || 1) * 20));
+
+                triggerPulse(towerData);
+                document.getElementById('last-msg').innerHTML = `SIGNAL_DETECTION: <span class="device-info">${id}</span> // ADDR: ${data.ip}`;
+                logSystem(`DATA_INBOUND [${id}]`);
+
+            } catch (e) {
+                console.error('Parse error', e);
+            }
+        });
+
+        function logSystem(msg) {
+            const el = document.getElementById('status-log');
+            const d = document.createElement('div');
+            d.textContent = `> ${msg}`;
+            el.prepend(d);
+            if (el.children.length > 10) el.removeChild(el.lastChild);
+        }
+
+        // --- ANIMATION LOOP ---
+        let autoRotate = true;
+        let angle = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.001;
+
+            // Animate Towers
+            devices.forEach((tData) => {
+                // Smooth height transition
+                tData.currentHeight += (tData.targetHeight - tData.currentHeight) * 0.1;
+                tData.mesh.scale.y = tData.currentHeight;
+                tData.mesh.position.y = tData.currentHeight / 2;
+
+                tData.outline.scale.y = tData.currentHeight;
+                tData.outline.position.y = tData.currentHeight / 2;
+
+                tData.glow.position.y = tData.currentHeight + 5 + Math.sin(time * 2) * 5;
+
+                // Animate Rings (Fade and Expand)
+                if (tData.ring.material.opacity > 0) {
+                    tData.ring.scale.x += 0.5;
+                    tData.ring.scale.y += 0.5;
+                    tData.ring.material.opacity -= 0.02;
+                }
+            });
+
+            // Camera Motion
+            if (autoRotate) {
+                angle += 0.002;
+                const dist = 600;
+                camera.position.x = Math.cos(angle) * dist;
+                camera.position.z = Math.sin(angle) * dist;
+                camera.position.y = 300 + Math.sin(time * 0.5) * 100;
+                camera.lookAt(0, 50, 0);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+
+</html>

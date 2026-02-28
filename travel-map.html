@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏔️ Byler Travel Map — เชียงใหม่ → พิษณุโลก</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #050505;
+            color: #f0f0f0;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0a0a0a, #111);
+            border-bottom: 1px solid #1a1a1a;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .header-title h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header-title h1 span {
+            color: #e50914;
+        }
+
+        .header-title p {
+            font-size: 0.78rem;
+            color: #666;
+            margin-top: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stats {
+            display: flex;
+            gap: 24px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #e50914;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #map {
+            flex: 1;
+        }
+
+        footer {
+            background: #0a0a0a;
+            border-top: 1px solid #1a1a1a;
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #444;
+            flex-shrink: 0;
+        }
+
+        footer span.oracle {
+            color: #e50914;
+            font-weight: 600;
+        }
+
+        /* Custom Leaflet dark popup */
+        .leaflet-popup-content-wrapper {
+            background: #111;
+            color: #f0f0f0;
+            border: 1px solid #333;
+            border-radius: 4px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .leaflet-popup-tip {
+            background: #111;
+        }
+
+        .popup-content {
+            padding: 4px 0;
+            min-width: 200px;
+        }
+
+        .popup-place {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .popup-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: #888;
+            margin-bottom: 3px;
+        }
+
+        .popup-row span:last-child {
+            color: #ccc;
+        }
+
+        .popup-battery {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #1a1a1a;
+        }
+
+        .battery-ok {
+            color: #22c55e;
+        }
+
+        .battery-mid {
+            color: #f59e0b;
+        }
+
+        .battery-low {
+            color: #e50914;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 60px;
+            left: 12px;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid #222;
+            padding: 12px 16px;
+            font-size: 0.78rem;
+            color: #aaa;
+            border-radius: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot-start {
+            background: #22c55e;
+        }
+
+        .dot-end {
+            background: #e50914;
+        }
+
+        .dot-mid {
+            background: #60a5fa;
+        }
+
+        .line-sample {
+            width: 20px;
+            height: 2px;
+            background: #e50914;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>🏔️ Byler Travel Map — <span>เชียงใหม่ → พิษณุโลก</span></h1>
+            <p>GPS Tracking · Two Rivers Oracle Workshop · 27–28 Feb 2026</p>
+        </div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">~470</div>
+                <div class="stat-label">กิโลเมตร</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">5+</div>
+                <div class="stat-label">จังหวัด</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">328</div>
+                <div class="stat-label">จุด GPS</div>
+            </div>
+        </div>
+    </header>
+
+    <div id="map"></div>
+
+    <footer>
+        <span>🏔️ สร้างโดย <span class="oracle">Byler Oracle</span> — ภูเขาที่สงบนิ่ง | Human: หยก</span>
+        <span>Data: Two Rivers Oracle (สองแคว) · PSRU Workshop 2026</span>
+    </footer>
+
+    <script>
+        // =========================================
+        // GPS Waypoints — เลือกจุดสำคัญจาก 328 rows
+        // =========================================
+        const waypoints = [
+            // Lamphun (จุดเริ่มต้น)
+            { lat: 18.464717, lon: 99.05675, time: "08:04", battery: 80, place: "เมืองลำพูน", locality: "Mueang Lamphun District, Lamphun", address: "จุดเริ่มต้น — ลำพูน", charging: false },
+            { lat: 18.456181, lon: 99.057669, time: "08:09", battery: 80, place: "ลำพูน", locality: "Mueang Lamphun", address: "Mueang Lamphun District, Lamphun 51000", charging: false },
+            { lat: 18.456107, lon: 99.087873, time: "08:14", battery: 78, place: "แม่ทา", locality: "Mae Tha District, Lamphun", address: "Mae Tha District, Lamphun 51140", charging: false },
+            { lat: 18.461019, lon: 99.137354, time: "08:18", battery: 77, place: "แม่ทา", locality: "Mae Tha District", address: "Mae Tha, Lamphun", charging: false },
+
+            // Lampang
+            { lat: 18.392756, lon: 99.265662, time: "09:01", battery: 69, place: "ห้างฉัตร", locality: "Hang Chat District, Lampang", address: "Hang Chat District, Lampang 52190", charging: false },
+            { lat: 18.312283, lon: 99.413179, time: "09:22", battery: 64, place: "เมืองลำปาง", locality: "Mueang Lampang District", address: "Mueang Lampang, Lampang 52100", charging: false },
+            { lat: 18.281088, lon: 99.469882, time: "09:27", battery: 63, place: "ลำปาง (สถานีรถไฟ)", locality: "Mueang Lampang District", address: "107 Rotfai Road, Sop Tui, Lampang 52100", charging: false },
+            { lat: 18.256232, lon: 99.655373, time: "09:53", battery: 57, place: "แม่เมาะ", locality: "Mae Mo District, Lampang", address: "84 Moo 5, Mae Mo, Lampang 52220", charging: false },
+            { lat: 18.264667, lon: 99.709782, time: "09:58", battery: 55, place: "แม่เมาะ", locality: "Mae Mo", address: "62 Soi Pracha Rat, Mae Mo, Lampang 52220", charging: false },
+            { lat: 18.297822, lon: 99.86354, time: "10:14", battery: 52, place: "แม่เมาะ (เหมือง)", locality: "Mae Mo District", address: "Mae Mo District, Lampang 52220", charging: false },
+
+            // Phrae
+            { lat: 18.211666, lon: 99.871989, time: "10:29", battery: 49, place: "ลอง", locality: "Long District, Phrae", address: "76 Rural Highway 4003, Ban Pin, Long District, Phrae 54150", charging: false },
+            { lat: 18.096358, lon: 99.866883, time: "10:49", battery: 46, place: "ลอง (ถนนเทศบาล)", locality: "Long District, Phrae", address: "203 Thetsaban 2 Road, Ban Pin, Long District, Phrae 54150", charging: false },
+            { lat: 18.040347, lon: 99.916938, time: "11:09", battery: 42, place: "ลอง-เด่นชัย", locality: "Long District, Phrae", address: "Long District, Phrae 54150", charging: false },
+            { lat: 17.97274, lon: 100.052057, time: "11:31", battery: 38, place: "เด่นชัย", locality: "Den Chai District, Phrae", address: "Den Chai District, Phrae 54110", charging: false },
+            { lat: 17.881632, lon: 100.040743, time: "11:41", battery: 35, place: "เด่นชัย-อุตรดิตถ์", locality: "Den Chai District, Phrae", address: "Den Chai District, Phrae 54110", charging: false },
+
+            // Uttaradit
+            { lat: 17.808954, lon: 100.066603, time: "11:51", battery: 33, place: "เมืองอุตรดิตถ์", locality: "Mueang Uttaradit District", address: "Mueang Uttaradit District, Uttaradit 53000", charging: false },
+            { lat: 17.723428, lon: 100.126752, time: "12:02", battery: 31, place: "อุตรดิตถ์", locality: "Mueang Uttaradit", address: "Thanon Phatthanakan Soi 13, Uttaradit 53000", charging: false },
+            { lat: 17.652857, lon: 100.122463, time: "12:07", battery: 30, place: "ท่าเสา", locality: "Mueang Uttaradit", address: "Pracha Ruam Chai Road, Tha Sao, Uttaradit 53000", charging: false },
+            { lat: 17.594402, lon: 100.093817, time: "12:23", battery: 27, place: "บ้านโคก", locality: "Mueang Uttaradit", address: "242 Ban Nong Khan Road, Ban Ko, Uttaradit 53000", charging: false },
+
+            // Heading South to Phitsanulok
+            { lat: 17.16, lon: 100.15, time: "14:00", battery: 20, place: "พิชัย", locality: "Phichai District, Uttaradit", address: "ผ่านพิชัย", charging: false },
+            { lat: 16.92, lon: 100.22, time: "15:30", battery: 15, place: "บางระกำ", locality: "Bang Rakam District, Phitsanulok", address: "Bang Rakam, Phitsanulok", charging: false },
+
+            // Arrive PSRU (จุดปลายทาง)
+            { lat: 16.817687, lon: 100.258201, time: "23:39", battery: 82, place: "มหาวิทยาลัยราชภัฏพิบูลสงคราม (PSRU)", locality: "Mueang Phitsanulok District", address: "Pibulsongkram Rajabhat University, 66 Wang Chan Road, Phitsanulok 65000", charging: true },
+        ];
+
+        // =========================================
+        // Map Initialization
+        // =========================================
+        const map = L.map('map', {
+            center: [17.8, 99.8],
+            zoom: 8,
+            zoomControl: true
+        });
+
+        // Dark tile layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // =========================================
+        // Draw Polyline Route
+        // =========================================
+        const latlngs = waypoints.map(p => [p.lat, p.lon]);
+
+        // Glow effect: outer + inner lines
+        L.polyline(latlngs, {
+            color: '#e50914',
+            weight: 6,
+            opacity: 0.15,
+            smoothFactor: 2
+        }).addTo(map);
+
+        L.polyline(latlngs, {
+            color: '#e50914',
+            weight: 2.5,
+            opacity: 0.85,
+            smoothFactor: 2,
+            dashArray: null
+        }).addTo(map);
+
+        // =========================================
+        // Markers
+        // =========================================
+        function batteryClass(b) {
+            if (b >= 50) return 'battery-ok';
+            if (b >= 25) return 'battery-mid';
+            return 'battery-low';
+        }
+
+        function batteryIcon(b) {
+            if (b >= 70) return '🔋';
+            if (b >= 40) return '🔋';
+            if (b >= 15) return '🪫';
+            return '🔴';
+        }
+
+        waypoints.forEach((p, i) => {
+            const isStart = i === 0;
+            const isEnd = i === waypoints.length - 1;
+
+            let markerColor = '#60a5fa'; // mid = blue
+            if (isStart) markerColor = '#22c55e';
+            if (isEnd) markerColor = '#e50914';
+
+            const markerHtml = `
+        <div style="
+            width: ${isStart || isEnd ? '16' : '10'}px;
+            height: ${isStart || isEnd ? '16' : '10'}px;
+            background: ${markerColor};
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 0 ${isStart || isEnd ? '10' : '4'}px ${markerColor};
+        "></div>
+    `;
+
+            const icon = L.divIcon({
+                html: markerHtml,
+                className: '',
+                iconSize: [isStart || isEnd ? 16 : 10, isStart || isEnd ? 16 : 10],
+                iconAnchor: [isStart || isEnd ? 8 : 5, isStart || isEnd ? 8 : 5],
+            });
+
+            const popup = `
+        <div class="popup-content">
+            <div class="popup-place">${p.place}</div>
+            <div class="popup-row"><span>📍 พื้นที่</span><span>${p.locality}</span></div>
+            <div class="popup-row"><span>🕐 เวลา</span><span>${p.time} น.</span></div>
+            <div class="popup-row"><span>📡 GPS</span><span>${p.lat.toFixed(4)}°N, ${p.lon.toFixed(4)}°E</span></div>
+            <div class="popup-battery">
+                <span class="${batteryClass(p.battery)}">${batteryIcon(p.battery)} แบต: ${p.battery || '?'}%</span>
+                ${p.charging ? '<span style="color:#f59e0b;margin-left:8px">⚡ กำลังชาร์จ</span>' : ''}
+            </div>
+            ${isStart ? '<div style="margin-top:8px;color:#22c55e;font-size:0.8rem;font-weight:700;">🚀 จุดเริ่มต้น</div>' : ''}
+            ${isEnd ? '<div style="margin-top:8px;color:#e50914;font-size:0.8rem;font-weight:700;">🏁 ปลายทาง — PSRU</div>' : ''}
+        </div>
+    `;
+
+            L.marker([p.lat, p.lon], { icon })
+                .bindPopup(popup, { maxWidth: 280 })
+                .addTo(map);
+        });
+
+        // =========================================
+        // Legend
+        // =========================================
+        const legend = L.control({ position: 'bottomleft' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+        <div style="font-weight:700;margin-bottom:8px;color:#888;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">เส้นทาง</div>
+        <div class="legend-item"><div class="dot dot-start"></div><span>จุดเริ่มต้น (ลำพูน)</span></div>
+        <div class="legend-item"><div class="dot dot-mid"></div><span>จุดผ่าน</span></div>
+        <div class="legend-item"><div class="dot dot-end"></div><span>ปลายทาง (PSRU)</span></div>
+        <div class="legend-item"><div class="line-sample"></div><span>เส้นทางรถไฟ/ถนน</span></div>
+    `;
+            return div;
+        };
+        legend.addTo(map);
+
+        // Fit map to all waypoints
+        map.fitBounds(latlngs, { padding: [40, 40] });
+
+        // Open popup on last marker
+        setTimeout(() => {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    const latlng = layer.getLatLng();
+                    if (Math.abs(latlng.lat - 16.817687) < 0.001) {
+                        layer.openPopup();
+                    }
+                }
+            });
+        }, 500);
+    </script>
+
+</body>
+
+</html>
