@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUSTBOY // THE_MIND_FLAYER // ULTIMATE_DASHBOARD</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        :root {
+            --st-red: #ff0000;
+            --st-dark-red: #3a0000;
+            --st-black: #050505;
+            --st-glow: rgba(255, 0, 0, 0.6);
+        }
+
+        body {
+            margin: 0;
+            background: var(--st-black);
+            overflow: hidden;
+            font-family: 'Fira Code', monospace;
+            color: var(--st-red);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-panel {
+            position: absolute;
+            padding: 20px;
+            border: 1px solid var(--st-red);
+            background: rgba(10, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+        }
+
+        #header {
+            top: 20px;
+            left: 20px;
+            border-left: 10px solid var(--st-red);
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px var(--st-red);
+        }
+
+        #header p {
+            margin: 5px 0 0;
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+
+        #stats-panel {
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+            border-bottom: 1px darkred dotted;
+            padding-bottom: 2px;
+        }
+
+        .stat-val {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #console {
+            bottom: 20px;
+            left: 20px;
+            width: 350px;
+            height: 150px;
+            overflow-y: hidden;
+            background: rgba(0, 0, 0, 0.9);
+            font-size: 0.65rem;
+            border: 1px solid var(--st-dark-red);
+            color: rgba(255, 0, 0, 0.5);
+            padding: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+            border-left: 2px solid var(--st-dark-red);
+            padding-left: 5px;
+        }
+
+        .log-entry.signal {
+            color: var(--st-red);
+            font-weight: bold;
+        }
+
+        #view-presets {
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: var(--st-black);
+            border: 1px solid var(--st-red);
+            color: var(--st-red);
+            padding: 8px 15px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+            pointer-events: auto;
+        }
+
+        .btn:hover,
+        .btn.active {
+            background: var(--st-red);
+            color: #000;
+            box-shadow: 0 0 15px var(--st-red);
+        }
+
+        #labels-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .node-label {
+            position: absolute;
+            font-size: 0.65rem;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--st-red);
+            padding: 4px 8px;
+            color: #fff;
+            transform: translate(-50%, -100%);
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 0 10px var(--st-red);
+            display: none;
+        }
+
+        .node-label b {
+            color: var(--st-red);
+        }
+
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
+            background-size: 100% 3px;
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0.2;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 20%, rgba(0, 0, 0, 0.95) 100%);
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        #classified-stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 15vw;
+            font-weight: 900;
+            color: rgba(255, 0, 0, 0.02);
+            pointer-events: none;
+            z-index: 1;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="classified-stamp">CONFIDENTIAL</div>
+    <div class="vignette"></div>
+    <div class="scanlines"></div>
+
+    <div id="ui-layer">
+        <div id="header" class="hud-panel">
+            <h1>MIND_FLAYER // PROTOCOL</h1>
+            <p>PROJECT_NINA // DUSTBOY_REALTIME_INTRUSION // NODE_NET_01<br>STATUS: <b>DEEP_COLLECT_ENABLED</b> //
+                SOURCE: LARIS_WSS_BRIDGE</p>
+        </div>
+
+        <div id="node-detail" class="hud-panel">
+            <h2>NODE_DOSSIER: <span id="dtl-id" style="color:#ff0">--</span></h2>
+            <div class="detail-row"><span>STATUS</span><span class="detail-val">SIGNAL_ACQUIRED</span></div>
+            <div class="detail-row"><span>PM_VALUE</span><span id="dtl-pm" class="detail-val">--</span></div>
+            <div class="detail-row"><span>UPTIME</span><span id="dtl-up" class="detail-val">--</span></div>
+            <div class="detail-row"><span>COORDINATES</span><span id="dtl-coords" class="detail-val">--</span></div>
+            <div style="font-size: 0.6rem; margin-top: 10px; opacity: 0.5;">PROPERTY_OF_DOE // DO_NOT_DISTRIBUTE</div>
+        </div>
+
+        <div id="view-presets">
+            <button class="btn" onclick="setCam('auto')">Auto_Orbit</button>
+            <button class="btn" onclick="setCam('node')">Focus_Node</button>
+            <button class="btn" onclick="setCam('core')">The_Abyss</button>
+        </div>
+
+        <div id="stats-panel" class="hud-panel">
+            <div class="stat-row"><span>SYSTEM_STATUS</span><span class="stat-val">ACTIVE</span></div>
+            <div class="stat-row"><span>TOTAL_NODES</span><span id="stat-nodes" class="stat-val">0</span></div>
+            <div class="stat-row"><span>AVG_PM2.5</span><span id="stat-avg" class="stat-val">0.0</span></div>
+            <div class="stat-row"><span>RIFT_STABILITY</span><span id="stat-stab" class="stat-val">98.4%</span></div>
+            <div style="margin-top: 10px; height: 40px; border: 1px solid #400; position: relative; overflow: hidden;">
+                <div id="pulse-bar"
+                    style="position: absolute; left: 0; top: 0; height: 100%; width: 50%; background: maroon; opacity: 0.5;">
+                </div>
+            </div>
+        </div>
+
+        <div id="console"></div>
+        <div id="labels-container"></div>
+    </div>
+
+    <script>
+        // --- THREE.JS INITIALIZATION ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050000);
+        scene.fog = new THREE.FogExp2(0x0a0000, 0.001);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(600, 400, 600);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        // --- THE MIND FLAYER (CORE ENTITY) ---
+        const flayerGroup = new THREE.Group();
+        scene.add(flayerGroup);
+
+        // Advanced Shader-ish Material for the entity
+        const entityGeo = new THREE.SphereGeometry(60, 64, 64);
+        const entityMat = new THREE.MeshPhongMaterial({
+            color: 0x000000,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.4,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.6
+        });
+        const entity = new THREE.Mesh(entityGeo, entityMat);
+        flayerGroup.add(entity);
+
+        // Tentacle-like inner layers
+        const innerLayer = new THREE.Mesh(
+            new THREE.TorusKnotGeometry(40, 15, 128, 16),
+            new THREE.MeshBasicMaterial({ color: 0x660000, wireframe: true, transparent: true, opacity: 0.3 })
+        );
+        flayerGroup.add(innerLayer);
+
+        const outerLayer = new THREE.Mesh(
+            new THREE.IcosahedronGeometry(120, 1),
+            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.1 })
+        );
+        flayerGroup.add(outerLayer);
+
+        // Core glow
+        const coreLight = new THREE.PointLight(0xff0000, 10, 1500);
+        coreLight.position.set(0, 0, 0);
+        scene.add(coreLight);
+
+        // Volumetric-ish smoke around core
+        const cloudGeo = new THREE.SphereGeometry(150, 32, 32);
+        const cloudMat = new THREE.MeshBasicMaterial({ color: 0x220000, transparent: true, opacity: 0.1, wireframe: true });
+        const cloud = new THREE.Mesh(cloudGeo, cloudMat);
+        scene.add(cloud);
+
+        // --- ASH / SPORE SYSTEM ---
+        const ashCount = 2000;
+        const ashGeo = new THREE.BufferGeometry();
+        const ashPos = new Float32Array(ashCount * 3);
+        const ashVel = new Float32Array(ashCount);
+        for (let i = 0; i < ashCount; i++) {
+            ashPos[i * 3] = (Math.random() - 0.5) * 4000;
+            ashPos[i * 3 + 1] = Math.random() * 2000;
+            ashPos[i * 3 + 2] = (Math.random() - 0.5) * 4000;
+            ashVel[i] = 0.5 + Math.random() * 2;
+        }
+        ashGeo.setAttribute('position', new THREE.BufferAttribute(ashPos, 3));
+        const ashSystem = new THREE.Points(ashGeo, new THREE.PointsMaterial({ color: 0x666666, size: 2, transparent: true, opacity: 0.4 }));
+        scene.add(ashSystem);
+
+        // --- LIGHTING ---
+        scene.add(new THREE.AmbientLight(0x110000, 1));
+        const overhead = new THREE.DirectionalLight(0xff0000, 0.5);
+        overhead.position.set(0, 500, 0);
+        scene.add(overhead);
+
+        // --- DATA STATE ---
+        const nodes = new Map();
+        const labelsContainer = document.getElementById('labels-container');
+        let avgPm = 0;
+
+        function createNode(id) {
+            const group = new THREE.Group();
+
+            // The Orb
+            const orbGeo = new THREE.SphereGeometry(8, 16, 16);
+            const orbMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const orb = new THREE.Mesh(orbGeo, orbMat);
+            group.add(orb);
+
+            // Pulse ring
+            const ringGeo = new THREE.RingGeometry(12, 14, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            group.add(ring);
+
+            // Data Beam (to core)
+            const beamGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)]);
+            const beamMat = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
+            const beam = new THREE.Line(beamGeo, beamMat);
+            scene.add(beam);
+
+            // Label
+            const label = document.createElement('div');
+            label.className = 'node-label';
+            label.innerHTML = `NODE: <b>${id}</b><br>PM2.5: <span class="pm-val">--</span>`;
+            labelsContainer.appendChild(label);
+
+            // Randomized initial orbit
+            const radius = 400 + Math.random() * 600;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 0.002 + Math.random() * 0.005;
+
+            return { group, orb, ring, beam, label, radius, angle, speed, pm25: 0, lastSignal: 0 };
+        }
+
+        // --- MQTT CONNECTION ---
+        const broker = 'wss://dustboy-wss-bridge.laris.workers.dev/mqtt';
+        const client = mqtt.connect(broker, { clientId: 'byler_ultimate_' + Math.random().toString(16).slice(2) });
+
+        client.on('connect', () => {
+            logConsole("CONNECTION_STABLE: ACCESSING_DIMENSION_X", true);
+            client.subscribe('DUSTBOY/#');
+        });
+
+        client.on('message', (topic, message) => {
+            try {
+                const data = JSON.parse(message.toString());
+                const parts = topic.split('/');
+                const id = parts.find(p => p !== 'DUSTBOY' && p !== 'status' && p !== 'model' && p !== 'v1' && p !== 'v2') || 'UNK';
+
+                if (!nodes.has(id)) {
+                    const n = createNode(id);
+                    nodes.set(id, n);
+                    scene.add(n.group);
+                    document.getElementById('stat-nodes').textContent = nodes.size;
+                }
+
+                const node = nodes.get(id);
+                const pm = data.pm25 || data.pm10 || 0;
+                node.pm25 = pm;
+                node.lastSignal = Date.now();
+
+                // Visual feedback
+                node.ring.scale.set(1, 1, 1);
+                node.ring.material.opacity = 1;
+                node.beam.material.opacity = 0.4;
+
+                node.label.querySelector('.pm-val').textContent = pm;
+
+                logConsole(`SIGNAL_INTRUSION: [${id}] PM=${pm}`);
+                updateGlobalStats();
+            } catch (e) { }
+        });
+
+        function updateGlobalStats() {
+            let total = 0;
+            nodes.forEach(n => total += n.pm25);
+            avgPm = nodes.size > 0 ? (total / nodes.size).toFixed(1) : 0;
+            document.getElementById('stat-avg').textContent = avgPm;
+
+            const stab = Math.max(20, 100 - (avgPm / 2)).toFixed(1);
+            document.getElementById('stat-stab').textContent = stab + "%";
+            document.getElementById('pulse-bar').style.width = (avgPm / 200 * 100) + "%";
+        }
+
+        function logConsole(msg, isSignal = false) {
+            const con = document.getElementById('console');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry' + (isSignal ? ' signal' : '');
+            entry.textContent = `> ${new Date().toLocaleTimeString()} :: ${msg}`;
+            con.prepend(entry);
+            if (con.children.length > 30) con.removeChild(con.lastChild);
+        }
+
+        // --- CAMERA CONTROLS ---
+        function setCam(mode) {
+            controls.autoRotate = (mode === 'auto');
+            if (mode === 'core') {
+                camera.position.set(150, 100, 150);
+                controls.target.set(0, 0, 0);
+            }
+            if (mode === 'node' && nodes.size > 0) {
+                const first = Array.from(nodes.values())[0];
+                camera.position.set(first.group.position.x + 100, 50, first.group.position.z + 100);
+                controls.target.copy(first.group.position);
+            }
+        }
+
+        // --- ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+        const projectVec = new THREE.Vector3();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const elapsed = clock.getElapsedTime();
+            controls.update();
+
+            // Mind Flayer Motion
+            entity.rotation.y += 0.01;
+            entity.rotation.z += 0.005;
+            const coreScale = 1 + (avgPm / 500) + Math.sin(elapsed * 2) * 0.05;
+            entity.scale.setScalar(coreScale);
+            entityMat.emissiveIntensity = 0.5 + Math.sin(elapsed * 4) * 0.3;
+            cloud.rotation.y -= 0.002;
+
+            // Ash system
+            const p = ashSystem.geometry.attributes.position.array;
+            for (let i = 0; i < ashCount; i++) {
+                p[i * 3 + 1] -= ashVel[i];
+                if (p[i * 3 + 1] < 0) p[i * 3 + 1] = 2000;
+            }
+            ashSystem.geometry.attributes.position.needsUpdate = true;
+
+            // Nodes & Labels
+            nodes.forEach(n => {
+                // Orbit
+                n.angle += n.speed * (1 + (n.pm25 / 100));
+                const targetX = Math.cos(n.angle) * n.radius;
+                const targetZ = Math.sin(n.angle) * n.radius;
+                const targetY = Math.sin(elapsed + n.angle) * 50;
+
+                n.group.position.set(targetX, targetY, targetZ);
+
+                // Ring pulse
+                if (n.ring.material.opacity > 0) {
+                    n.ring.scale.x += 1.5;
+                    n.ring.scale.y += 1.5;
+                    n.ring.material.opacity -= 0.02;
+                }
+
+                // Beam to core
+                const wPos = n.group.position;
+                n.beam.geometry.setFromPoints([wPos, new THREE.Vector3(0, 0, 0)]);
+                if (n.beam.material.opacity > 0) n.beam.material.opacity -= 0.005;
+
+                // Project Label
+                projectVec.copy(wPos);
+                projectVec.project(camera);
+
+                const x = (projectVec.x * .5 + .5) * window.innerWidth;
+                const y = (projectVec.y * -.5 + .5) * window.innerHeight;
+
+                if (projectVec.z > 1) {
+                    n.label.style.display = 'none';
+                } else {
+                    n.label.style.display = 'block';
+                    n.label.style.left = x + 'px';
+                    n.label.style.top = (y - 20) + 'px';
+                    const dist = camera.position.distanceTo(wPos);
+                    n.label.style.opacity = Math.max(0, 1 - dist / 2000);
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+
+</html>
