@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D DUSTBOY | THE UPSIDE DOWN</title>
+    <title>3D DUSTBOY | THE UPSIDE DOWN (V2)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <style>
         body {
@@ -14,6 +15,42 @@
             overflow: hidden;
             font-family: 'Fira Code', monospace;
             color: #ff0000;
+        }
+
+        #labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 12;
+        }
+
+        .label {
+            position: absolute;
+            color: #fff;
+            font-size: 0.65rem;
+            background: rgba(50, 0, 0, 0.8);
+            padding: 5px 10px;
+            border: 1px solid #f00;
+            pointer-events: none;
+            border-radius: 4px;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s;
+        }
+
+        .label b {
+            color: #ff004c;
+        }
+
+        .label i {
+            color: #888;
+            font-style: normal;
+            font-size: 0.55rem;
         }
 
         #overlay {
@@ -50,6 +87,36 @@
             color: #ff4444;
         }
 
+        #view-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .view-btn {
+            background: #1a0000;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 6px 12px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .view-btn:hover {
+            background: #ff0000;
+            color: #000;
+        }
+
+        .view-btn.active {
+            background: #ff0000;
+            color: #000;
+        }
+
         #stats {
             position: absolute;
             bottom: 20px;
@@ -58,12 +125,6 @@
             z-index: 10;
             font-size: 0.7rem;
             color: #ff4444;
-        }
-
-        .device-info {
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 0 0 5px #ff0000;
         }
 
         #status-log {
@@ -82,42 +143,17 @@
             display: block;
         }
 
-        /* Stranger Things Vignette & Noise */
-        .vignette {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            box-shadow: inset 0 0 200px #000;
-            pointer-events: none;
-            z-index: 15;
-        }
-
-        .noise {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.05;
-            pointer-events: none;
-            z-index: 16;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Noise_Texture.png');
-        }
-
-        /* CRT Effect Overlay */
         .scanlines {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%),
-                linear-gradient(90deg, rgba(255, 0, 0, 0.1), rgba(0, 0, 0, 0), rgba(255, 0, 0, 0.1));
-            background-size: 100% 3px, 5px 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
+            background-size: 100% 3px;
             pointer-events: none;
             z-index: 20;
+            opacity: 0.4;
         }
 
         #classified-mark {
@@ -138,12 +174,17 @@
 <body>
     <div id="classified-mark">TOP_SECRET</div>
     <div id="overlay"></div>
-    <div class="vignette"></div>
-    <div class="noise"></div>
     <div class="scanlines"></div>
+    <div id="labels"></div>
     <div id="hud">
         <h1>DUSTBOY // THE_UPSIDE_DOWN</h1>
         <p>CLASSIFIED DATA VISUALIZATION // Hawkins Lab Internal Network</p>
+    </div>
+    <div id="view-controls">
+        <button class="view-btn" onclick="setCamera('auto')">Auto Orbit</button>
+        <button class="view-btn" onclick="setCamera('top')">Top View</button>
+        <button class="view-btn" onclick="setCamera('side')">Side View</button>
+        <button class="view-btn" onclick="setCamera('front')">Front View</button>
     </div>
     <div id="stats">
         <div id="nodes-count">NODES_IN_RIFT: 0</div>
@@ -156,9 +197,8 @@
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x0a0000, 0.0015);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-        camera.position.set(300, 200, 300);
-        camera.lookAt(0, 0, 0);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 8000);
+        camera.position.set(400, 300, 400);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -166,164 +206,134 @@
         renderer.setClearColor(0x050000);
         document.body.appendChild(renderer.domElement);
 
-        // --- LIGHTING ---
-        const ambientLight = new THREE.AmbientLight(0x220000, 0.5);
-        scene.add(ambientLight);
+        // --- CONTROLS ---
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 2000;
+        controls.minDistance = 50;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0;
 
-        // --- THE RIFT (Multi-layered Core) ---
+        function setCamera(mode) {
+            controls.autoRotate = (mode === 'auto');
+            if (mode === 'top') camera.position.set(0, 800, 0);
+            if (mode === 'side') camera.position.set(800, 100, 0);
+            if (mode === 'front') camera.position.set(0, 100, 800);
+            document.querySelectorAll('.view-btn').forEach(b => {
+                b.classList.remove('active');
+                if (b.textContent.toLowerCase().includes(mode)) b.classList.add('active');
+            });
+        }
+
+        // --- LIGHTING ---
+        scene.add(new THREE.AmbientLight(0x220000, 0.8));
+
+        // --- THE RIFT (Core) ---
         const riftGroup = new THREE.Group();
         riftGroup.position.y = 100;
         scene.add(riftGroup);
 
-        // Core 1: Inner Plasma
-        const innerGeo = new THREE.IcosahedronGeometry(15, 0);
-        const innerMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const innerCore = new THREE.Mesh(innerGeo, innerMat);
+        const innerCore = new THREE.Mesh(new THREE.IcosahedronGeometry(15, 0), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
         riftGroup.add(innerCore);
 
-        // Core 2: Wireframe shell
-        const midGeo = new THREE.IcosahedronGeometry(25, 1);
-        const midMat = new THREE.MeshPhongMaterial({ color: 0x880000, wireframe: true, emissive: 0xff0000, emissiveIntensity: 1 });
-        const midCore = new THREE.Mesh(midGeo, midMat);
+        const midCore = new THREE.Mesh(new THREE.IcosahedronGeometry(30, 1), new THREE.MeshPhongMaterial({ color: 0x880000, wireframe: true, emissive: 0xff0000 }));
         riftGroup.add(midCore);
 
-        // Core 3: Outer GLow
-        const outerGeo = new THREE.SphereGeometry(40, 32, 32);
-        const outerMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.1, side: THREE.BackSide });
-        const outerGlow = new THREE.Mesh(outerGeo, outerMat);
-        riftGroup.add(outerGlow);
-
-        const riftLight = new THREE.PointLight(0xff0000, 4, 800);
+        const riftLight = new THREE.PointLight(0xff0000, 3, 1000);
         riftLight.position.copy(riftGroup.position);
         scene.add(riftLight);
 
-        // --- ASH PARTICLE SYSTEM ---
-        const ashCount = 2000;
+        // --- ASH PARTICLES ---
+        const ashCount = 1500;
         const ashGeo = new THREE.BufferGeometry();
-        const ashPositions = new Float32Array(ashCount * 3);
+        const ashPos = new Float32Array(ashCount * 3);
         const ashSpeeds = new Float32Array(ashCount);
-
         for (let i = 0; i < ashCount; i++) {
-            ashPositions[i * 3] = (Math.random() - 0.5) * 2000;
-            ashPositions[i * 3 + 1] = Math.random() * 500;
-            ashPositions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
-            ashSpeeds[i] = 0.1 + Math.random() * 0.3;
+            ashPos[i * 3] = (Math.random() - 0.5) * 3000;
+            ashPos[i * 3 + 1] = Math.random() * 800;
+            ashPos[i * 3 + 2] = (Math.random() - 0.5) * 3000;
+            ashSpeeds[i] = 0.2 + Math.random() * 0.5;
         }
-        ashGeo.setAttribute('position', new THREE.BufferAttribute(ashPositions, 3));
-        const ashMat = new THREE.PointsMaterial({ color: 0xaaaaaa, size: 2, transparent: true, opacity: 0.6 });
-        const ashParticles = new THREE.Points(ashGeo, ashMat);
+        ashGeo.setAttribute('position', new THREE.BufferAttribute(ashPos, 3));
+        const ashParticles = new THREE.Points(ashGeo, new THREE.PointsMaterial({ color: 0x888888, size: 2, transparent: true, opacity: 0.5 }));
         scene.add(ashParticles);
 
-        // --- GRID FLOOR (TENTACLE-ISH) ---
-        const gridHelper = new THREE.GridHelper(2000, 60, 0x330000, 0x110000);
-        scene.add(gridHelper);
+        scene.add(new THREE.GridHelper(3000, 80, 0x330000, 0x110000));
 
-        // --- DEVICE DATA MANAGEMENT ---
+        // --- DEVICE MANAGEMENT ---
         const devices = new Map();
         const towers = new THREE.Group();
+        const labelsContainer = document.getElementById('labels');
         scene.add(towers);
 
         function createTower(id) {
             const group = new THREE.Group();
 
-            // Base geometry (Organic/Tech mix)
-            const geometry = new THREE.BoxGeometry(12, 1, 12);
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x000000,
-                transparent: true,
-                opacity: 0.9,
-                emissive: 0xff0000,
-                emissiveIntensity: 0.2
-            });
-
-            const towerMesh = new THREE.Mesh(geometry, material);
+            // Mesh
+            const towerMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 1, 10), new THREE.MeshPhongMaterial({ color: 0x000000, emissive: 0xaa0000 }));
             towerMesh.position.y = 0.5;
             group.add(towerMesh);
 
-            // Red Outline
-            const edges = new THREE.EdgesGeometry(geometry);
-            const lineMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
-            const outline = new THREE.LineSegments(edges, lineMat);
-            outline.position.y = 0.5;
-            group.add(outline);
-
-            // Pulsing Ring (Ash Ring)
-            const ringGeo = new THREE.RingGeometry(12, 15, 32);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, side: THREE.DoubleSide });
-            const ring = new THREE.Mesh(ringGeo, ringMat);
+            // Ring
+            const ring = new THREE.Mesh(new THREE.RingGeometry(12, 14, 32), new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, side: THREE.DoubleSide }));
             ring.rotation.x = Math.PI / 2;
             group.add(ring);
 
-            // Signal Light
-            const glowGeo = new THREE.SphereGeometry(3, 8, 8);
-            const glowMat = new THREE.MeshBasicMaterial({ color: 0xff4400 });
-            const glow = new THREE.Mesh(glowGeo, glowMat);
+            // Floating Light
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
             group.add(glow);
 
-            // Random grid position
-            const spread = 1200;
-            group.position.set(
-                (Math.random() - 0.5) * spread,
-                0,
-                (Math.random() - 0.5) * spread
-            );
-
-            // Data Beam (Flickering red line to Rift)
-            const beamGeo = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(0, 0, 0),
-                new THREE.Vector3(0, 0, 0)
-            ]);
-            const beamMat = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
-            const beam = new THREE.Line(beamGeo, beamMat);
+            // Beam
+            const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)]), new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 }));
             scene.add(beam);
 
-            return { group, mesh: towerMesh, outline, ring, glow, beam, targetHeight: 10, currentHeight: 1 };
-        }
+            // Label Div
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'label';
+            labelDiv.innerHTML = `NODE_ID: <b>${id}</b><br>STATUS: <i>INITIALIZING</i>`;
+            labelsContainer.appendChild(labelDiv);
 
-        function triggerPulse(towerData) {
-            towerData.ring.scale.set(1, 1, 1);
-            towerData.ring.material.opacity = 1;
-            towerData.beam.material.opacity = 0.8;
-            towerData.glow.material.color.set(0xff0000);
+            group.position.set((Math.random() - 0.5) * 1500, 0, (Math.random() - 0.5) * 1500);
 
-            // Camera shake effect if close? (Maybe later)
+            return { group, mesh: towerMesh, ring, glow, beam, labelDiv, pm25: 'N/A', uptime: '0s', targetHeight: 10, currentHeight: 1 };
         }
 
         // --- MQTT SETUP ---
         const broker = 'wss://dustboy-wss-bridge.laris.workers.dev/mqtt';
-        const topic = 'DUSTBOY/#'; // Expanded to capture more potential data points
-        const client = mqtt.connect(broker, { clientId: 'yok_st_viz_' + Math.random().toString(16).slice(2) });
+        const client = mqtt.connect(broker, { clientId: 'byler_upside_' + Math.random().toString(16).slice(2) });
 
-        client.on('connect', () => {
-            logSystem('SECURE_LINK_ESTABLISHED: ' + broker);
-            client.subscribe(topic);
-        });
+        client.on('connect', () => { client.subscribe('DUSTBOY/#'); logSystem('LINK_ESTABLISHED'); });
 
         client.on('message', (t, msg) => {
-            console.log('Incoming Topic:', t); // Log to console for debugging
             try {
                 const data = JSON.parse(msg.toString());
                 const parts = t.split('/');
-                // Try to find a meaningful ID in the topic structure
                 const id = parts.find(p => p !== 'DUSTBOY' && p !== 'status' && p !== 'model' && p !== 'v1' && p !== 'v2') || 'UNKNOWN';
 
                 if (!devices.has(id)) {
-                    const towerData = createTower(id);
-                    devices.set(id, towerData);
-                    towers.add(towerData.group);
+                    const tower = createTower(id);
+                    devices.set(id, tower);
+                    towers.add(tower.group);
                     document.getElementById('nodes-count').textContent = 'NODES_IN_RIFT: ' + devices.size;
                 }
 
-                const towerData = devices.get(id);
-                towerData.targetHeight = Math.min(300, 30 + (Math.log10(data.up || 1) * 30));
+                const tData = devices.get(id);
+                tData.pm25 = data.pm10 || data.pm25 || 'N/A'; // Map available PM value
+                tData.uptime = data.up ? (data.up / 3600).toFixed(1) + 'h' : 'N/A';
+                tData.targetHeight = Math.min(400, 20 + (Math.log10(parseFloat(tData.pm25) || 5) * 50));
 
-                triggerPulse(towerData);
-                document.getElementById('last-msg').innerHTML = `RIFT_SIGNAL: <span class="device-info">${id}</span> // ADDR: ${data.ip}`;
+                // Update Label Text
+                tData.labelDiv.innerHTML = `SENSOR: <b>${id}</b><br>PM_VALUE: <b>${tData.pm25}</b><br>UPTIME: <i>${tData.uptime}</i>`;
+
+                // Trigger Visual
+                tData.ring.scale.set(1, 1, 1);
+                tData.ring.material.opacity = 0.8;
+                tData.beam.material.opacity = 0.6;
+
+                document.getElementById('last-msg').innerHTML = `SIGNAL: <span class="device-info">${id}</span> // PM: ${tData.pm25}`;
                 logSystem(`SIGNAL_DETECTED [${id}]`);
-
-            } catch (e) {
-                console.error('Signal corrupted', e);
-            }
+            } catch (e) { }
         });
 
         function logSystem(msg) {
@@ -334,74 +344,63 @@
             if (el.children.length > 20) el.removeChild(el.lastChild);
         }
 
-        // --- ANIMATION LOOP ---
-        let angle = 0;
-
+        const projectVec = new THREE.Vector3();
         function animate() {
             requestAnimationFrame(animate);
-
             const time = Date.now() * 0.001;
+            controls.update();
 
-            // Animate Rift
-            innerCore.rotation.y += 0.05;
-            midCore.rotation.z -= 0.02;
-            midCore.rotation.x += 0.01;
-            midCore.scale.setScalar(1 + Math.sin(time * 5) * 0.05);
-            outerGlow.scale.setScalar(1.2 + Math.sin(time * 2) * 0.2);
-            riftLight.intensity = 3 + Math.sin(time * 10) * 1;
+            // Core
+            innerCore.rotation.y += 0.02;
+            midCore.rotation.x -= 0.01;
+            midCore.scale.setScalar(1 + Math.sin(time * 3) * 0.1);
 
-            // Animate Ash
-            const pos = ashParticles.geometry.attributes.position.array;
+            // Ash
+            const p = ashParticles.geometry.attributes.position.array;
             for (let i = 0; i < ashCount; i++) {
-                pos[i * 3 + 1] -= ashSpeeds[i];
-                pos[i * 3] += Math.sin(time + i) * 0.2;
-                if (pos[i * 3 + 1] < 0) pos[i * 3 + 1] = 500;
+                p[i * 3 + 1] -= ashSpeeds[i];
+                if (p[i * 3 + 1] < 0) p[i * 3 + 1] = 800;
             }
             ashParticles.geometry.attributes.position.needsUpdate = true;
 
-            // Animate Towers
-            devices.forEach((tData) => {
+            // Towers & Labels
+            devices.forEach(tData => {
                 tData.currentHeight += (tData.targetHeight - tData.currentHeight) * 0.05;
                 tData.mesh.scale.y = tData.currentHeight;
                 tData.mesh.position.y = tData.currentHeight / 2;
+                tData.glow.position.y = tData.currentHeight + 10 + Math.sin(time * 2) * 5;
 
-                tData.outline.scale.y = tData.currentHeight;
-                tData.outline.position.y = tData.currentHeight / 2;
+                // Beam to Core
+                const wPos = new THREE.Vector3();
+                tData.glow.getWorldPosition(wPos);
+                tData.beam.geometry.setFromPoints([wPos, riftGroup.position]);
+                if (tData.beam.material.opacity > 0) tData.beam.material.opacity -= 0.005;
 
-                const glowY = tData.currentHeight + 10 + Math.sin(time * 4) * 5;
-                tData.glow.position.y = glowY;
-
-                // Update Beam Positions
-                const worldPos = new THREE.Vector3();
-                tData.glow.getWorldPosition(worldPos);
-
-                tData.beam.geometry.setFromPoints([
-                    worldPos,
-                    riftGroup.position
-                ]);
-
-                if (tData.beam.material.opacity > 0) {
-                    tData.beam.material.opacity -= 0.005;
-                    // Add flickering
-                    tData.beam.material.opacity *= (0.9 + Math.random() * 0.2);
-                }
-
-                // Animate Rings
+                // Ring
                 if (tData.ring.material.opacity > 0) {
-                    tData.ring.scale.x += 1;
-                    tData.ring.scale.y += 1;
-                    tData.ring.material.opacity -= 0.01;
+                    tData.ring.scale.x += 1; tData.ring.scale.y += 1; tData.ring.material.opacity -= 0.01;
                     tData.ring.position.y = tData.currentHeight;
                 }
-            });
 
-            // Camera Orbit
-            angle += 0.0015;
-            const dist = 700 + Math.sin(time * 0.3) * 100;
-            camera.position.x = Math.cos(angle) * dist;
-            camera.position.z = Math.sin(angle) * dist;
-            camera.position.y = 250 + Math.cos(time * 0.2) * 50;
-            camera.lookAt(0, 80, 0);
+                // Project Label to Screen
+                projectVec.copy(wPos);
+                projectVec.project(camera);
+
+                const x = (projectVec.x * .5 + .5) * window.innerWidth;
+                const y = (projectVec.y * -.5 + .5) * window.innerHeight;
+
+                // Hide if behind camera or out of bounds
+                if (projectVec.z > 1) {
+                    tData.labelDiv.style.display = 'none';
+                } else {
+                    tData.labelDiv.style.display = 'block';
+                    tData.labelDiv.style.left = x + 'px';
+                    tData.labelDiv.style.top = (y - 20) + 'px';
+                    // Fog fading
+                    const dist = camera.position.distanceTo(wPos);
+                    tData.labelDiv.style.opacity = Math.max(0, 1 - dist / 1500);
+                }
+            });
 
             renderer.render(scene, camera);
         }
