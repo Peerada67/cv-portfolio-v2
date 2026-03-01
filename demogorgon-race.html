@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demogorgon Sprint // Multiplayer Race</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0d0d0d;
+            color: #ff003c;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Header */
+        header {
+            margin-top: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 0px #000, 0 0 10px #ff003c;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        p {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        /* Login Screen */
+        #login-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 0, 0, 0.9);
+            border: 4px solid #ff003c;
+            padding: 40px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        input {
+            background: #000;
+            border: 2px solid #ff003c;
+            color: #fff;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        button {
+            background: #ff003c;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #fff;
+            color: #ff003c;
+        }
+
+        /* Game Area */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            width: 90%;
+            max-width: 1000px;
+            flex: 1;
+            margin-top: 30px;
+            position: relative;
+        }
+
+        .track-container {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px 0;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .lane {
+            position: relative;
+            height: 60px;
+            border-bottom: 2px dashed #444;
+            display: flex;
+            align-items: center;
+        }
+
+        .lane:last-child {
+            border-bottom: none;
+        }
+
+        .finish-line {
+            position: absolute;
+            right: 50px;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            background: repeating-linear-gradient(45deg,
+                    #fff,
+                    #fff 10px,
+                    #000 10px,
+                    #000 20px);
+            z-index: 1;
+        }
+
+        .player-sprite {
+            position: absolute;
+            left: 10px;
+            /* Start position */
+            width: 40px;
+            height: 40px;
+            background: #ff003c;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.5rem;
+            color: #fff;
+            z-index: 5;
+            transition: left 0.1s linear;
+        }
+
+        .player-name {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.5rem;
+            color: #aaa;
+            white-space: nowrap;
+        }
+
+        .my-sprite {
+            background: #00ffcc !important;
+            /* Stand out */
+            border-color: #fff !important;
+            box-shadow: 0 0 10px #00ffcc;
+            z-index: 10;
+        }
+
+        /* Controls / HUD */
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 20px 0;
+        }
+
+        .instruction {
+            color: #00ffcc;
+            font-size: 1.2rem;
+            animation: pulse 1s infinite alternate;
+        }
+
+        /* Leaderboard Panel */
+        #leaderboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff003c;
+            padding: 15px;
+            width: 250px;
+            display: none;
+            /* Shows after login */
+            z-index: 20;
+        }
+
+        #leaderboard h3 {
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            color: #fff;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .hof-entry {
+            font-size: 0.6rem;
+            color: #ff003c;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .hof-entry span.time {
+            color: #aaa;
+        }
+
+        /* Status text */
+        #connection-status {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.5rem;
+            color: #555;
+        }
+
+        /* Winner Overlay */
+        #winner-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 4px solid #00ffcc;
+            padding: 40px;
+            text-align: center;
+            z-index: 200;
+            display: none;
+        }
+
+        #winner-screen h2 {
+            color: #00ffcc;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        #winner-screen .time {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        /* Return Link */
+        .cv-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.7rem;
+            border: 1px solid #fff;
+            padding: 8px;
+            transition: 0.2s;
+        }
+
+        .cv-link:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            to {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="cv-link">
+        < RETURN</a>
+
+            <header>
+                <h1>DEMOGORGON<br>SPRINT</h1>
+                <p>A Real-time MQTT Multiplayer Race</p>
+            </header>
+
+            <!-- Leaderboard -->
+            <div id="leaderboard">
+                <h3>🏆 HALL OF FAME</h3>
+                <div id="hof-list">
+                    <div class="hof-entry">Loading from Matrix...</div>
+                </div>
+            </div>
+
+            <!-- Login -->
+            <div id="login-screen">
+                <h2 style="margin-bottom: 20px; font-size: 1.2rem;">ENTER THE UPSIDE DOWN</h2>
+                <input type="text" id="player-name" placeholder="YOUR CODENAME" maxlength="12" value="Oracle">
+                <br>
+                <button onclick="joinGame()">JOIN RACE</button>
+            </div>
+
+            <!-- Winner -->
+            <div id="winner-screen">
+                <h2 id="winner-name">ORACLE WINS!</h2>
+                <div class="time" id="winner-time">TIME: 4.52s</div>
+                <button onclick="resetGame()">RACE AGAIN</button>
+            </div>
+
+            <!-- Game -->
+            <div id="game-screen">
+                <div class="track-container" id="track-board">
+                    <div class="finish-line"></div>
+                    <!-- Lanes are generated dynamically by JS -->
+                </div>
+
+                <div id="hud">
+                    <div>
+                        <p style="color:#555; font-size: 0.6rem;">BROKER: wss://broker.emqx.io:8083/mqtt</p>
+                    </div>
+                    <div class="instruction">MASH [SPACEBAR] TO RUN!</div>
+                    <div id="timer" style="font-size: 1.5rem; color: #fff;">0.00s</div>
+                </div>
+            </div>
+
+            <div id="connection-status">Connecting to MQTT Broker...</div>
+
+
+            <script>
+                // --- GAME LOGIC & STATE ---
+                const BROKER_URL = 'wss://broker.emqx.io:8083/mqtt';
+                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/RACE_V1';
+                const PLAYERS_TOPIC = `${TOPIC_PREFIX}/PLAYERS`; // Publish movements here
+                const HOF_TOPIC = `${TOPIC_PREFIX}/LEADERBOARD`; // Retained hall of fame
+
+                let client = null;
+                let myName = "";
+                let myProgress = 0; // 0 to 100
+                let isRacing = false;
+                let startTime = 0;
+                let timerInterval = null;
+                let players = {}; // stores all players by name: { progress: 50, lastUpdate: timestamp }
+
+                const MAX_CLICKS_NEEDED = 50; // How many spacebars to reach 100%
+
+                // DOM
+                const statusEl = document.getElementById('connection-status');
+                const loginScreen = document.getElementById('login-screen');
+                const gameScreen = document.getElementById('game-screen');
+                const leaderboard = document.getElementById('leaderboard');
+                const trackBoard = document.getElementById('track-board');
+                const timerEl = document.getElementById('timer');
+                const winnerScreen = document.getElementById('winner-screen');
+                const hofList = document.getElementById('hof-list');
+
+                let hallOfFame = []; // Array of { name, time }
+
+                // --- CONNECT TO MQTT ---
+                function initMQTT() {
+                    client = mqtt.connect(BROKER_URL);
+
+                    client.on('connect', () => {
+                        statusEl.textContent = "✓ Connected to MQTT Cloud";
+                        statusEl.style.color = "#00ffcc";
+
+                        // Subscribe to players movement
+                        client.subscribe(`${PLAYERS_TOPIC}/+`);
+                        // Subscribe to Hall Of Fame (retained for persistency)
+                        client.subscribe(HOF_TOPIC);
+                    });
+
+                    client.on('message', (topic, message) => {
+                        // Parse HOF
+                        if (topic === HOF_TOPIC) {
+                            try {
+                                let data = JSON.parse(message.toString());
+                                hallOfFame = data;
+                                renderHOF();
+                            } catch (e) { }
+                        }
+
+                        // Parse Player Movement
+                        if (topic.startsWith(`${PLAYERS_TOPIC}/`)) {
+                            let playerName = topic.split('/').pop();
+                            let progress = parseFloat(message.toString());
+
+                            if (playerName !== myName) {
+                                updateGhost(playerName, progress);
+                            }
+                        }
+                    });
+                }
+
+                // --- LOGIN ---
+                function joinGame() {
+                    const inputName = document.getElementById('player-name').value.trim().toUpperCase();
+                    if (!inputName) return;
+                    myName = inputName;
+
+                    loginScreen.style.display = 'none';
+                    gameScreen.style.display = 'flex';
+                    leaderboard.style.display = 'block';
+
+                    // Reset My State
+                    myProgress = 0;
+                    isRacing = true;
+                    startTime = Date.now();
+                    updateMySprite();
+
+                    // Clear old ghosts
+                    const ghosts = document.querySelectorAll('.ghost-sprite');
+                    ghosts.forEach(g => g.remove());
+                    players = {};
+
+                    // Start Timer UI
+                    clearInterval(timerInterval);
+                    timerInterval = setInterval(() => {
+                        if (isRacing) {
+                            let t = (Date.now() - startTime) / 1000;
+                            timerEl.textContent = t.toFixed(2) + "s";
+                        }
+                    }, 50);
+
+                    // Announce presence
+                    publishProgress();
+                }
+
+                // --- GAMEPLAY ---
+                window.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        e.preventDefault(); // stop scrolling
+                        if (!isRacing) return;
+
+                        // Move forward!
+                        myProgress += (100 / MAX_CLICKS_NEEDED);
+                        if (myProgress >= 100) {
+                            myProgress = 100;
+                            raceFinished();
+                        }
+
+                        updateMySprite();
+                        publishProgress(); // Send movement to everyone immediately
+                    }
+                });
+
+                function publishProgress() {
+                    if (!client || !client.connected) return;
+                    client.publish(`${PLAYERS_TOPIC}/${myName}`, myProgress.toString(), { qos: 0 });
+                }
+
+                function updateMySprite() {
+                    let sprite = document.getElementById('sprite-my');
+                    if (!sprite) {
+                        // Create my lane + sprite
+                        let lane = document.createElement('div');
+                        lane.className = 'lane';
+
+                        sprite = document.createElement('div');
+                        sprite.id = 'sprite-my';
+                        sprite.className = 'player-sprite my-sprite';
+                        sprite.innerHTML = `👾<div class="player-name">${myName}</div>`;
+
+                        lane.appendChild(sprite);
+                        trackBoard.appendChild(lane);
+                    }
+
+                    // Calculate CSS left: track width is ~ 100%, finish line is at calc(100% - 60px)
+                    sprite.style.left = `calc(${myProgress}% - ${myProgress * 0.6}px)`;
+                }
+
+                function updateGhost(name, progress) {
+                    players[name] = { progress: progress, lastUpdate: Date.now() };
+
+                    let safeId = "sprite-ghost-" + name.replace(/[^a-zA-Z0-9]/g, '');
+                    let sprite = document.getElementById(safeId);
+
+                    if (!sprite) {
+                        // Create ghost lane + sprite
+                        let lane = document.createElement('div');
+                        lane.className = 'lane';
+
+                        sprite = document.createElement('div');
+                        sprite.id = safeId;
+                        sprite.className = 'player-sprite ghost-sprite';
+                        sprite.innerHTML = `👾<div class="player-name">${name}</div>`;
+
+                        lane.appendChild(sprite);
+                        trackBoard.appendChild(lane);
+                    }
+
+                    sprite.style.left = `calc(${progress}% - ${progress * 0.6}px)`;
+
+                    // Check if ghost won before us
+                    if (progress >= 100 && isRacing) {
+                        // Someone else won
+                    }
+                }
+
+                // Cleanup stale ghosts (optional, simple garbage collection)
+                setInterval(() => {
+                    let now = Date.now();
+                    for (let name in players) {
+                        if (now - players[name].lastUpdate > 10000) { // stale for 10s
+                            let safeId = "sprite-ghost-" + name.replace(/[^a-zA-Z0-9]/g, '');
+                            let sprite = document.getElementById(safeId);
+                            if (sprite && sprite.parentElement) {
+                                sprite.parentElement.remove(); // Remove lane
+                            }
+                            delete players[name];
+                        }
+                    }
+                }, 5000);
+
+                // --- END GAME ---
+                function raceFinished() {
+                    isRacing = false;
+                    clearInterval(timerInterval);
+                    let finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                    timerEl.textContent = finalTime + "s";
+
+                    // Show Winner Screen
+                    document.getElementById('winner-name').textContent = `${myName} FINISHED!`;
+                    document.getElementById('winner-time').textContent = `TIME: ${finalTime}s`;
+                    winnerScreen.style.display = 'block';
+
+                    // Hall of Fame Logic
+                    checkAndUploadHOF(myName, parseFloat(finalTime));
+                }
+
+                function resetGame() {
+                    winnerScreen.style.display = 'none';
+                    // Back to login to re-enter
+                    gameScreen.style.display = 'none';
+                    loginScreen.style.display = 'block';
+
+                    // Clean my track
+                    let mySprite = document.getElementById('sprite-my');
+                    if (mySprite) mySprite.parentElement.remove();
+                }
+
+                // --- LEADERBOARD LOGIC ---
+                function checkAndUploadHOF(name, timeStr) {
+                    let time = parseFloat(timeStr);
+
+                    // Re-read latest HOF array 
+                    let newHof = [...hallOfFame];
+
+                    // Add new entry
+                    newHof.push({ name: name, time: time });
+
+                    // Sort by time (lowest is best)
+                    newHof.sort((a, b) => a.time - b.time);
+
+                    // Keep only top 5
+                    if (newHof.length > 5) newHof = newHof.slice(0, 5);
+
+                    // Publish back to MQTT with RETAIN = TRUE!
+                    if (client && client.connected) {
+                        client.publish(HOF_TOPIC, JSON.stringify(newHof), { qos: 1, retain: true });
+                    }
+                }
+
+                function renderHOF() {
+                    hofList.innerHTML = '';
+                    if (hallOfFame.length === 0) {
+                        hofList.innerHTML = '<div class="hof-entry">No records yet.</div>';
+                        return;
+                    }
+
+                    hallOfFame.forEach((entry, idx) => {
+                        let div = document.createElement('div');
+                        div.className = 'hof-entry';
+                        div.innerHTML = `<span>#${idx + 1} ${entry.name}</span> <span class="time">${entry.time.toFixed(2)}s</span>`;
+                        hofList.appendChild(div);
+                    });
+                }
+
+                // Run
+                initMQTT();
+
+            </script>
+</body>
+
+</html>
