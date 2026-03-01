@@ -24,7 +24,13 @@
         }
 
         body {
-            background-color: var(--st-dark);
+            /* Upside down stormy red sky */
+            background-color: #0d0101;
+            background-image:
+                radial-gradient(circle at 50% 10%, rgba(150, 0, 0, 0.4), transparent 50%),
+                url('https://images.unsplash.com/photo-1542281286-9e0a16bb7366?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-blend-mode: multiply;
             color: var(--st-red);
             font-family: 'Press Start 2P', cursive;
             overflow: hidden;
@@ -35,6 +41,41 @@
             position: relative;
         }
 
+        /* Lightning Flashes */
+        .lightning {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0);
+            animation: flash 8s infinite;
+        }
+
+        @keyframes flash {
+
+            0%,
+            95%,
+            98%,
+            100% {
+                background: rgba(255, 255, 255, 0);
+            }
+
+            96% {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            97% {
+                background: rgba(255, 255, 255, 0);
+            }
+
+            99% {
+                background: rgba(255, 255, 255, 0.3);
+            }
+        }
+
         /* Upside Down Spores Effect */
         .spores {
             position: absolute;
@@ -43,12 +84,12 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 0;
+            z-index: 2;
             background-image:
-                radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.4) 1px, transparent 0),
-                radial-gradient(2px 2px at 40% 40%, rgba(255, 255, 255, 0.1) 1px, transparent 0),
-                radial-gradient(1.5px 1.5px at 70% 60%, rgba(255, 255, 255, 0.3) 1px, transparent 0),
-                radial-gradient(2px 2px at 90% 10%, rgba(255, 255, 255, 0.2) 1px, transparent 0);
+                radial-gradient(1px 1px at 10% 20%, rgba(200, 200, 200, 0.6) 1px, transparent 0),
+                radial-gradient(2px 2px at 40% 40%, rgba(200, 200, 200, 0.3) 1px, transparent 0),
+                radial-gradient(1.5px 1.5px at 70% 60%, rgba(200, 200, 200, 0.5) 1px, transparent 0),
+                radial-gradient(2px 2px at 90% 10%, rgba(200, 200, 200, 0.4) 1px, transparent 0);
             background-size: 200px 200px;
             animation: slow-drift 10s linear infinite;
         }
@@ -82,7 +123,7 @@
 
         p {
             font-size: 0.6rem;
-            color: #888;
+            color: #ccc;
             font-family: 'Press Start 2P', cursive;
         }
 
@@ -99,7 +140,7 @@
             text-align: center;
             z-index: 100;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
         }
 
         /* Character Grid */
@@ -114,7 +155,6 @@
             border: 1px dotted #444;
         }
 
-        /* Custom Scrollbar */
         .char-grid::-webkit-scrollbar {
             width: 5px;
         }
@@ -148,11 +188,12 @@
         }
 
         .char-img {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             margin-bottom: 5px;
-            object-fit: contain;
-            border-radius: 4px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #333;
         }
 
         .char-name {
@@ -193,11 +234,15 @@
             box-shadow: 0 0 20px var(--st-red);
         }
 
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.6rem;
+        }
+
         /* Game Area - Vertical Setup */
         #game-screen {
             display: none;
             flex-direction: row;
-            /* Horizontal layout for HUD vs Track */
             justify-content: center;
             width: 100%;
             max-width: 800px;
@@ -208,11 +253,11 @@
 
         .track-container {
             background: rgba(10, 0, 0, 0.8);
-            border-left: 2px solid #330000;
-            border-right: 2px solid #330000;
+            border-left: 2px solid #500;
+            border-right: 2px solid #500;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: row;
-            /* Lanes side by side */
             justify-content: space-around;
             width: 60%;
             position: relative;
@@ -221,7 +266,7 @@
         .lane {
             position: relative;
             flex: 1;
-            border-right: 2px dashed rgba(255, 0, 0, 0.3);
+            border-right: 2px dashed rgba(255, 0, 0, 0.2);
             display: flex;
             flex-direction: column-reverse;
             /* From bottom to top */
@@ -251,7 +296,6 @@
         .player-sprite {
             position: absolute;
             bottom: 10px;
-            /* Start position at bottom */
             width: 50px;
             height: 60px;
             z-index: 5;
@@ -260,7 +304,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-end;
-            /* Align content to bottom so name is at top */
         }
 
         .char-visual {
@@ -269,102 +312,17 @@
             position: relative;
         }
 
-        /* Demogorgon CSS implementation */
-        .demogorgon-body {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 40px;
-            animation: breathe 0.5s infinite alternate;
+        .char-visual img {
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+            border: 2px solid #555;
+            object-fit: cover;
+            transition: 0.1s;
         }
 
-        .petal {
-            position: absolute;
-            background: var(--st-red);
-            border: 1px solid #000;
-            width: 14px;
-            height: 20px;
-            border-radius: 50% 50% 10% 10%;
-            transform-origin: bottom center;
-        }
-
-        .p-top {
-            top: -10px;
-            left: 13px;
-            transform: rotate(0deg);
-        }
-
-        .p-tr {
-            top: 0px;
-            right: -2px;
-            transform: rotate(72deg);
-        }
-
-        .p-br {
-            bottom: -2px;
-            right: 2px;
-            transform: rotate(144deg);
-        }
-
-        .p-bl {
-            bottom: -2px;
-            left: 2px;
-            transform: rotate(216deg);
-        }
-
-        .p-tl {
-            top: 0px;
-            left: -2px;
-            transform: rotate(288deg);
-        }
-
-        .mouth-center {
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background: #000;
-            border-radius: 50%;
-            top: 12px;
-            left: 12px;
-            box-shadow: inset 0 0 5px #fff;
-            z-index: 2;
-        }
-
-        .mouth-center::after {
-            content: '';
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            width: 8px;
-            height: 8px;
-            background: radial-gradient(circle, transparent 2px, #fff 3px);
-            border-radius: 50%;
-        }
-
-        @keyframes breathe {
-            0% {
-                transform: translate(-50%, -50%) scale(1);
-            }
-
-            100% {
-                transform: translate(-50%, -50%) scale(1.1);
-            }
-        }
-
-        .running .petal {
-            animation: chomp 0.2s infinite alternate;
-        }
-
-        @keyframes chomp {
-            0% {
-                transform: rotate(var(--rot)) scaleY(1);
-            }
-
-            100% {
-                transform: rotate(var(--rot)) scaleY(0.5);
-            }
+        .running .char-visual img {
+            transform: scale(1.1) rotate(5deg);
         }
 
         .player-name {
@@ -377,11 +335,6 @@
             border: 1px solid #444;
             position: absolute;
             bottom: -15px;
-        }
-
-        .my-sprite .petal {
-            background: var(--my-color);
-            box-shadow: 0 0 10px var(--my-color);
         }
 
         .my-sprite .player-name {
@@ -407,15 +360,18 @@
 
         .instruction {
             color: var(--my-color);
-            font-size: 1rem;
+            font-size: 0.8rem;
             line-height: 1.5;
             text-align: center;
             animation: pulse 1s infinite alternate;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 0 0 10px var(--my-color);
+            border: 1px solid var(--my-color);
+            padding: 10px;
+            background: rgba(0, 255, 204, 0.1);
         }
 
-        /* Leaderboard Panel on the Right side of screen */
+        /* Leaderboard Panel */
         #leaderboard {
             position: absolute;
             top: 20px;
@@ -435,7 +391,7 @@
             color: #fff;
             text-align: center;
             border-bottom: 1px solid #444;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
         }
 
         .hof-entry {
@@ -450,6 +406,63 @@
 
         .hof-entry span.time {
             color: #aaa;
+        }
+
+        /* Stats Modal */
+        #stats-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 15, 20, 0.95);
+            border: 2px solid var(--my-color);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 300;
+            display: none;
+            color: #fff;
+        }
+
+        #stats-modal h2 {
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            color: var(--my-color);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 8px;
+            border-bottom: 1px solid #333;
+            text-align: left;
+        }
+
+        .stats-table th {
+            color: #888;
+        }
+
+        .stats-table td {
+            color: #ccc;
+        }
+
+        .close-stats {
+            display: block;
+            margin: 20px auto 0;
+            border-color: var(--my-color);
+            color: var(--my-color);
         }
 
         /* Status text */
@@ -504,7 +517,6 @@
             box-shadow: 0 0 20px var(--my-color);
         }
 
-        /* Return Link */
         .cv-link {
             position: absolute;
             top: 20px;
@@ -532,7 +544,7 @@
 
             to {
                 transform: scale(1.05);
-                text-shadow: 0 0 20px var(--my-color);
+                text-shadow: 0 0 15px var(--my-color);
             }
         }
     </style>
@@ -540,6 +552,7 @@
 
 <body>
 
+    <div class="lightning"></div>
     <div class="spores"></div>
 
     <a href="index.html" class="cv-link">
@@ -547,7 +560,7 @@
 
             <header>
                 <h1>RUN</h1>
-                <p>ESCAPE THE UPSIDE DOWN</p>
+                <p>LABORATORY ESCAPE LOGS</p>
             </header>
 
             <!-- Leaderboard -->
@@ -556,20 +569,42 @@
                 <div id="hof-list">
                     <div class="hof-entry">Loading Matrix...</div>
                 </div>
+                <button class="btn-small" style="width:100%; margin-top:10px;" onclick="showStats()">VIEW LAB
+                    DATA</button>
             </div>
 
             <!-- Login -->
             <div id="login-screen">
                 <h2
                     style="margin-bottom: 10px; font-family: 'Creepster', cursive; font-size: 2rem; color: #fff; letter-spacing: 3px;">
-                    CHOOSE AVATAR</h2>
+                    SUBJECT ID</h2>
 
                 <div class="char-grid" id="char-grid">
                     <!-- Injected via JS -->
                 </div>
 
                 <input type="text" id="player-name" placeholder="YOUR CODENAME" maxlength="12" value="Oracle">
-                <button onclick="joinGame()">HUNT</button>
+                <button onclick="joinGame()">ENTER THE VOID</button>
+            </div>
+
+            <!-- Stats Modal -->
+            <div id="stats-modal">
+                <h2>HAWKINS NATIONAL LABORATORY<br><small style="color:#888; font-size:0.6rem;">SUBJECT TELEMETRY
+                        LOGS</small></h2>
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>SUBJECT (Codename)</th>
+                            <th>AVATAR</th>
+                            <th>BEST INTEL (s)</th>
+                            <th>WINS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-body">
+                        <!-- Injected via JS -->
+                    </tbody>
+                </table>
+                <button class="btn-small close-stats" onclick="closeStats()">CLOSE DATA</button>
             </div>
 
             <!-- Winner -->
@@ -584,7 +619,8 @@
 
                 <!-- HUD Left -->
                 <div id="hud">
-                    <div class="instruction">MASH [SPACEBAR]<br>TO CLIMB OUT!</div>
+                    <!-- Anti-Cheat Instruction -->
+                    <div class="instruction">DO NOT HOLD SPACEBAR.<br><br>TAP [SPACE] REPEATEDLY<br>TO CLIMB OUT!</div>
                     <div id="timer"
                         style="font-size: 2rem; color: #fff; font-family: 'Rubik Glitch', cursive; margin-bottom: 20px;">
                         0.00s</div>
@@ -600,34 +636,23 @@
 
             </div>
 
-            <div id="connection-status">Connecting to Demogorgon Hive Mind...</div>
+            <div id="connection-status">Connecting to Hive Mind Protocol...</div>
 
             <script>
-                // Character Config
+                // Character Config - Realistic (micah api) and Custom Vectors
                 const CHARACTERS = {
-                    'el': { name: 'Eleven', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Jane&backgroundColor=b6e3f4' },
-                    'mike': { name: 'Mike', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Michael&backgroundColor=c0aede' },
-                    'will': { name: 'Will', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=William&backgroundColor=d1d4f9' },
-                    'dustin': { name: 'Dustin', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Dustin&backgroundColor=ffd5dc' },
-                    'lucas': { name: 'Lucas', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Lucas&backgroundColor=ffdfbf' },
-                    'max': { name: 'Max', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Maxine&backgroundColor=f0b3ff' },
-                    'steve': { name: 'Steve', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Steve&backgroundColor=b3ffb3' },
-                    'nancy': { name: 'Nancy', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Nancy&backgroundColor=ffffba' },
-                    'jonathan': { name: 'Jonathan', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Jonathan&backgroundColor=bfc9ff' },
-                    'vecna': { name: 'Vecna', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Vecna&backgroundColor=8b0000' },
-                    'demogorgon': { name: 'Demogorgon', type: 'css' }
+                    'el': { name: 'Eleven', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Eleven&backgroundColor=b6e3f4' },
+                    'mike': { name: 'Mike', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Michael&backgroundColor=c0aede' },
+                    'will': { name: 'Will', img: 'https://api.dicebear.com/9.x/micah/svg?seed=William&backgroundColor=d1d4f9' },
+                    'dustin': { name: 'Dustin', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Dust&backgroundColor=ffd5dc' },
+                    'lucas': { name: 'Lucas', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Luke&backgroundColor=ffdfbf' },
+                    'max': { name: 'Max', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Maxine&backgroundColor=f0b3ff' },
+                    'steve': { name: 'Steve', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Steve&backgroundColor=b3ffb3' },
+                    'nancy': { name: 'Nancy', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Nancy&backgroundColor=ffffba' },
+                    'jonathan': { name: 'Jonathan', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Jon&backgroundColor=bfc9ff' },
+                    'vecna': { name: 'Vecna', img: './assets/vecna.png' }, // High-res asset
+                    'demogorgon': { name: 'Demogorgon', img: './assets/demogorgon.png' } // High-res asset
                 };
-
-                const demogorgonHTML = `
-            <div class="demogorgon-body">
-                <div class="petal p-top" style="--rot: 0deg;"></div>
-                <div class="petal p-tr" style="--rot: 72deg;"></div>
-                <div class="petal p-br" style="--rot: 144deg;"></div>
-                <div class="petal p-bl" style="--rot: 216deg;"></div>
-                <div class="petal p-tl" style="--rot: 288deg;"></div>
-                <div class="mouth-center"></div>
-            </div>
-        `;
 
                 let myCharId = 'el'; // default
 
@@ -641,13 +666,7 @@
                         card.className = 'char-card' + (id === myCharId ? ' selected' : '');
                         card.onclick = () => { myCharId = id; renderCharSelect(); };
 
-                        let visual = '';
-                        if (char.type === 'css') {
-                            visual = `<div style="width:40px; height:40px; position:relative; transform:scale(0.8); margin:0 auto; padding-top:20px;">${demogorgonHTML}</div>`;
-                        } else {
-                            visual = `<img src="${char.img}" class="char-img">`;
-                        }
-
+                        let visual = `<img src="${char.img}" class="char-img">`;
                         card.innerHTML = `${visual}<div class="char-name">${char.name}</div>`;
                         grid.appendChild(card);
                     });
@@ -655,30 +674,29 @@
 
                 function getAvatarHTML(id) {
                     let char = CHARACTERS[id] || CHARACTERS['demogorgon'];
-                    if (char.type === 'css') {
-                        return `<div class="char-visual">${demogorgonHTML}</div>`;
-                    } else {
-                        return `<div class="char-visual"><img src="${char.img}" style="width:100%; height:100%; border-radius:5px; border:2px solid #555;"></div>`;
-                    }
+                    return `<div class="char-visual"><img src="${char.img}"></div>`;
                 }
 
                 renderCharSelect();
 
                 // --- GAME LOGIC & STATE ---
                 const BROKER_URL = 'wss://broker.emqx.io:8083/mqtt';
-                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/RACE_V3';
+                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/RACE_V4'; // Bumped version for new stats struct
                 const PLAYERS_TOPIC = `${TOPIC_PREFIX}/PLAYERS`;
                 const HOF_TOPIC = `${TOPIC_PREFIX}/LEADERBOARD`;
 
                 let client = null;
                 let myName = "";
-                let myProgress = 0; // 0 to 100
+                let myProgress = 0;
                 let isRacing = false;
                 let startTime = 0;
                 let timerInterval = null;
                 let players = {};
 
-                const MAX_CLICKS_NEEDED = 60; // Tweak difficulty
+                const MAX_CLICKS_NEEDED = 60;
+
+                // Anti-Cheat Variables
+                let spaceIsPressed = false;
 
                 // DOM
                 const statusEl = document.getElementById('connection-status');
@@ -690,7 +708,7 @@
                 const winnerScreen = document.getElementById('winner-screen');
                 const hofList = document.getElementById('hof-list');
 
-                let hallOfFame = [];
+                let hallOfFame = []; // Array of global lab stats
 
                 // --- CONNECT TO MQTT ---
                 function initMQTT() {
@@ -709,6 +727,7 @@
                             try {
                                 hallOfFame = JSON.parse(message.toString());
                                 renderHOF();
+                                renderStatsTable();
                             } catch (e) { }
                         }
 
@@ -739,6 +758,7 @@
 
                     myProgress = 0;
                     isRacing = true;
+                    spaceIsPressed = false; // Reset anti-cheat
                     startTime = Date.now();
                     updateMySprite(true);
 
@@ -760,20 +780,31 @@
                     publishProgress();
                 }
 
-                // --- GAMEPLAY ---
+                // --- ANTI-CHEAT GAMEPLAY ---
                 window.addEventListener('keydown', (e) => {
                     if (e.code === 'Space') {
                         e.preventDefault();
                         if (!isRacing) return;
 
-                        myProgress += (100 / MAX_CLICKS_NEEDED);
-                        if (myProgress >= 100) {
-                            myProgress = 100;
-                            raceFinished();
-                        }
+                        // Anti-Cheat: Must release spacebar before pressing again
+                        if (!spaceIsPressed) {
+                            spaceIsPressed = true;
+                            myProgress += (100 / MAX_CLICKS_NEEDED);
+                            if (myProgress >= 100) {
+                                myProgress = 100;
+                                raceFinished();
+                            }
 
-                        updateMySprite(false);
-                        publishProgress();
+                            updateMySprite(false);
+                            publishProgress();
+                        }
+                    }
+                });
+
+                // Anti-Cheat: Listen for layout to unlock next press
+                window.addEventListener('keyup', (e) => {
+                    if (e.code === 'Space') {
+                        spaceIsPressed = false;
                     }
                 });
 
@@ -782,7 +813,6 @@
                     let payload = JSON.stringify({ p: myProgress.toFixed(2), c: myCharId });
                     client.publish(`${PLAYERS_TOPIC}/${myName}`, payload, { qos: 0 });
                 }
-
 
                 function updateMySprite(isReset) {
                     let sprite = document.getElementById('sprite-my');
@@ -805,13 +835,12 @@
                         trackBoard.appendChild(lane);
                     }
 
-                    // Animate mouth on press
                     if (!isReset) {
                         sprite.classList.add('running');
                         clearTimeout(sprite.animTimer);
                         sprite.animTimer = setTimeout(() => {
                             sprite.classList.remove('running');
-                        }, 150);
+                        }, 100);
                     }
 
                     sprite.style.bottom = `calc(${myProgress}% - ${myProgress * 0.4}px)`;
@@ -842,20 +871,18 @@
                         trackBoard.appendChild(lane);
                     }
 
-                    // Simple ghost animation check
                     let oldProg = parseFloat(sprite.style.bottom) || 0;
                     if (progress > oldProg) {
                         sprite.classList.add('running');
                         clearTimeout(sprite.animTimer);
                         sprite.animTimer = setTimeout(() => {
                             sprite.classList.remove('running');
-                        }, 200);
+                        }, 150);
                     }
 
                     sprite.style.bottom = `calc(${progress}% - ${progress * 0.4}px)`;
                 }
 
-                // Cleanup stale ghosts
                 setInterval(() => {
                     let now = Date.now();
                     for (let name in players) {
@@ -884,7 +911,7 @@
                     document.getElementById('winner-time').textContent = `TIME: ${finalTime}s`;
                     winnerScreen.style.display = 'block';
 
-                    checkAndUploadHOF(myName, parseFloat(finalTime), myCharId);
+                    checkAndUploadStats(myName, parseFloat(finalTime), myCharId);
                 }
 
                 function resetGame() {
@@ -896,16 +923,30 @@
                     if (mySprite) mySprite.parentElement.remove();
                 }
 
-                // --- LEADERBOARD LOGIC ---
-                function checkAndUploadHOF(name, timeStr, charId) {
-                    let time = parseFloat(timeStr);
-                    let newHof = [...hallOfFame];
-                    newHof.push({ name: name, time: time, char: charId });
-                    newHof.sort((a, b) => a.time - b.time);
-                    if (newHof.length > 5) newHof = newHof.slice(0, 5);
+                // --- ADVANCED STATS LOGIC ---
+                function checkAndUploadStats(name, time, charId) {
+                    // Stats object struct: { name: "", bestTime: 9.9, wins: 1, char: "" }
+                    let updatedStats = [...hallOfFame];
+
+                    let existing = updatedStats.find(s => s.name === name);
+                    if (existing) {
+                        existing.wins += 1;
+                        if (time < existing.bestTime) {
+                            existing.bestTime = time;
+                        }
+                        existing.char = charId; // update to latest character played
+                    } else {
+                        updatedStats.push({ name: name, bestTime: time, wins: 1, char: charId });
+                    }
+
+                    // Sort by Best Time
+                    updatedStats.sort((a, b) => a.bestTime - b.bestTime);
+
+                    // Keep history for up to 20 players to avoid giant payloads
+                    if (updatedStats.length > 20) updatedStats = updatedStats.slice(0, 20);
 
                     if (client && client.connected) {
-                        client.publish(HOF_TOPIC, JSON.stringify(newHof), { qos: 1, retain: true });
+                        client.publish(HOF_TOPIC, JSON.stringify(updatedStats), { qos: 1, retain: true });
                     }
                 }
 
@@ -916,14 +957,40 @@
                         return;
                     }
 
-                    hallOfFame.forEach((entry, idx) => {
+                    // Top 5 only for the side panel
+                    const top5 = hallOfFame.slice(0, 5);
+                    top5.forEach((entry, idx) => {
                         let div = document.createElement('div');
                         div.className = 'hof-entry';
                         let trophy = idx === 0 ? '👑' : '';
                         let cName = CHARACTERS[entry.char] ? CHARACTERS[entry.char].name : '';
-                        div.innerHTML = `<span>${idx + 1}. ${trophy} ${entry.name} <small style="color:#666;">(${cName})</small></span> <span class="time">${entry.time.toFixed(2)}s</span>`;
+                        div.innerHTML = `<span>${idx + 1}. ${trophy} ${entry.name}</span> <span class="time">${entry.bestTime.toFixed(2)}s</span>`;
                         hofList.appendChild(div);
                     });
+                }
+
+                function renderStatsTable() {
+                    const tbody = document.getElementById('stats-body');
+                    tbody.innerHTML = '';
+                    hallOfFame.forEach((entry) => {
+                        let charData = CHARACTERS[entry.char] || CHARACTERS['demogorgon'];
+                        let tr = document.createElement('tr');
+                        tr.innerHTML = `
+                    <td style="font-weight:bold; color:var(--my-color);">${entry.name}</td>
+                    <td><img src="${charData.img}" style="width:24px; height:24px; border-radius:4px; vertical-align:middle;"> ${charData.name}</td>
+                    <td>${entry.bestTime.toFixed(2)}</td>
+                    <td style="color:var(--st-red);">${entry.wins}</td>
+                `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                // Stats UI Controls
+                function showStats() {
+                    document.getElementById('stats-modal').style.display = 'block';
+                }
+                function closeStats() {
+                    document.getElementById('stats-modal').style.display = 'none';
                 }
 
                 initMQTT();
