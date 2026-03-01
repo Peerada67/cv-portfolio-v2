@@ -188,11 +188,11 @@
         }
 
         .char-img {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             margin-bottom: 5px;
-            object-fit: cover;
-            border-radius: 5px;
+            object-fit: contain;
+            border-radius: 4px;
             border: 1px solid #333;
         }
 
@@ -286,7 +286,6 @@
             border-right: 2px dashed rgba(255, 0, 0, 0.2);
             display: flex;
             flex-direction: column-reverse;
-            /* From bottom to top */
             align-items: center;
         }
 
@@ -305,7 +304,7 @@
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
         }
 
-        /* Player Sprite System */
+        /* Sprite System */
         .player-sprite {
             position: absolute;
             bottom: 10px;
@@ -323,19 +322,106 @@
             width: 50px;
             height: 50px;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .char-visual img {
             width: 100%;
             height: 100%;
-            border-radius: 5px;
-            border: 2px solid #555;
+            border-radius: 4px;
+            border: 2px solid #444;
             object-fit: cover;
             transition: 0.1s;
         }
 
         .running .char-visual img {
             transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Demogorgon CSS Sprite */
+        .demogorgon-body {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            animation: breathe 0.5s infinite alternate;
+        }
+
+        .petal {
+            position: absolute;
+            background: var(--st-red);
+            border: 1px solid #000;
+            width: 14px;
+            height: 20px;
+            border-radius: 50% 50% 10% 10%;
+            transform-origin: bottom center;
+        }
+
+        .p-top {
+            top: -10px;
+            left: 13px;
+            transform: rotate(0deg);
+        }
+
+        .p-tr {
+            top: 0px;
+            right: -2px;
+            transform: rotate(72deg);
+        }
+
+        .p-br {
+            bottom: -2px;
+            right: 2px;
+            transform: rotate(144deg);
+        }
+
+        .p-bl {
+            bottom: -2px;
+            left: 2px;
+            transform: rotate(216deg);
+        }
+
+        .p-tl {
+            top: 0px;
+            left: -2px;
+            transform: rotate(288deg);
+        }
+
+        .mouth-center {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #000;
+            border-radius: 50%;
+            top: 12px;
+            left: 12px;
+            box-shadow: inset 0 0 5px #fff;
+            z-index: 2;
+        }
+
+        @keyframes breathe {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.1);
+            }
+        }
+
+        .running .petal {
+            animation: chomp 0.2s infinite alternate;
+        }
+
+        @keyframes chomp {
+            0% {
+                transform: rotate(var(--rot)) scaleY(1);
+            }
+
+            100% {
+                transform: rotate(var(--rot)) scaleY(0.5);
+            }
         }
 
         .player-name {
@@ -361,7 +447,11 @@
             box-shadow: 0 0 15px var(--my-color);
         }
 
-        /* HUD on the Left */
+        .my-sprite .petal {
+            background: var(--my-color);
+            box-shadow: 0 0 10px var(--my-color);
+        }
+
         #hud {
             display: flex;
             flex-direction: column;
@@ -385,7 +475,6 @@
             background: rgba(0, 255, 204, 0.1);
         }
 
-        /* Leaderboard Panel */
         #leaderboard {
             position: absolute;
             top: 20px;
@@ -422,7 +511,6 @@
             color: #aaa;
         }
 
-        /* Sync Overlays */
         #sync-overlay {
             position: absolute;
             top: 50%;
@@ -432,7 +520,6 @@
             text-align: center;
             width: 100%;
             pointer-events: none;
-            /* Let clicks pass through if needed, except buttons */
         }
 
         #countdown-text {
@@ -443,7 +530,6 @@
             display: none;
         }
 
-        /* Controls block in the HUD that only shows in lobby */
         #lobby-controls {
             margin-bottom: 20px;
             text-align: center;
@@ -486,16 +572,13 @@
 
     <div class="lightning"></div>
     <div class="spores"></div>
-
     <a href="index.html" class="cv-link">
         < RETURN</a>
-
             <header>
                 <h1>RUN</h1>
-                <p>SYNCHRONIZED LABORATORY ESCAPE</p>
+                <p>SYNCHRONIZED LOBBY SYSTEM</p>
             </header>
 
-            <!-- Leaderboard -->
             <div id="leaderboard">
                 <h3>🏆 HALL OF FAME</h3>
                 <div id="hof-list">
@@ -505,27 +588,21 @@
                     onclick="document.getElementById('stats-modal').classList.add('active')">VIEW LAB DATA</button>
             </div>
 
-            <!-- Login Panel -->
             <div id="login-screen" class="panel active">
                 <h2
-                    style="margin-bottom: 10px; font-family: 'Creepster', cursive; font-size: 2rem; color: #fff; letter-spacing: 3px;">
+                    style="margin-bottom: 15px; font-family: 'Creepster', cursive; font-size: 2rem; color: #fff; letter-spacing: 3px;">
                     SUBJECT ID</h2>
-
                 <div class="char-grid" id="char-grid"></div>
-
                 <input type="text" id="player-name" placeholder="YOUR CODENAME" maxlength="12" value="Oracle">
-                <button onclick="joinLobby()">ENTER LOBBY</button>
+                <button onclick="joinLobby()">ENTER THE VOID</button>
             </div>
 
-            <!-- Stats Modal Panel -->
             <div id="stats-modal" class="panel"
                 style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
                 <h2
                     style="font-family: 'JetBrains Mono', monospace; color: var(--my-color); font-size: 1.2rem; margin-bottom: 15px;">
-                    HAWKINS NATIONAL LABORATORY<br><small style="color:#888; font-size:0.6rem;">SUBJECT TELEMETRY
-                        LOGS</small></h2>
-                <table
-                    style="width: 100%; border-collapse: collapse; font-size: 0.7rem; font-family: 'Courier New', Courier, monospace; color: #ccc;">
+                    HAWKINS LAB TELEMETRY</h2>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.7rem; color: #ccc;">
                     <thead>
                         <tr>
                             <th style="padding:8px; border-bottom:1px solid #333; color:#888; text-align:left;">SUBJECT
@@ -541,10 +618,9 @@
                     <tbody id="stats-body"></tbody>
                 </table>
                 <button class="btn-small btn-green" style="margin-top:20px;"
-                    onclick="document.getElementById('stats-modal').classList.remove('active')">CLOSE DATA</button>
+                    onclick="document.getElementById('stats-modal').classList.remove('active')">CLOSE</button>
             </div>
 
-            <!-- Winner Panel -->
             <div id="winner-screen" class="panel"
                 style="border-color:var(--my-color); box-shadow: 0 0 50px var(--my-color);">
                 <h2 id="winner-name"
@@ -555,469 +631,221 @@
                 <button class="btn-green" onclick="returnToLobby()">RETURN TO LOBBY</button>
             </div>
 
-            <!-- Sync Overlays -->
             <div id="sync-overlay">
                 <div id="countdown-text">3</div>
             </div>
 
-            <!-- Game Screen -->
             <div id="game-screen">
-
-                <!-- HUD Left -->
                 <div id="hud">
-
-                    <!-- Shows only when in LOBBY -->
                     <div id="lobby-controls">
-                        <p style="color:#aaa; font-size:0.7rem; margin-bottom:15px;" id="players-waiting-text">WAITING
-                            FOR SUBJECTS...</p>
-                        <button class="btn-green" onclick="requestStartGame()" id="start-btn">START RACE</button>
+                        <p style="color:#aaa; font-size:0.7rem; margin-bottom:15px;" id="players-waiting-text">
+                            WAITING...</p>
+                        <button class="btn-green" onclick="requestStartGame()">START RACE</button>
                     </div>
-
-                    <!-- Shows only when RACING -->
                     <div id="race-controls" style="display:none;">
-                        <div class="instruction">DO NOT HOLD SPACEBAR.<br><br>TAP [SPACE] REPEATEDLY<br>TO CLIMB OUT!
-                        </div>
+                        <div class="instruction">TAP [SPACE] REPEATEDLY<br>TO CLIMB OUT!</div>
                         <div id="timer"
                             style="font-size: 2rem; color: #fff; font-family: 'Rubik Glitch', cursive; margin-bottom: 20px;">
                             0.00s</div>
                     </div>
-
-                    <p
-                        style="color:#555; font-size: 0.5rem; text-align: center; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:100%;">
-                        BROKER: wss://broker.emqx.io:8083/mqtt</p>
+                    <p style="color:#555; font-size: 0.5rem; text-align: center; position:absolute; bottom:20px;">
+                        broker.emqx.io</p>
                 </div>
-
-                <!-- Vertical Track Right -->
                 <div class="track-container" id="track-board">
                     <div class="finish-line"></div>
-                    <!-- Lanes & Sprites will be placed here -->
                 </div>
-
             </div>
 
-            <!-- Bottom label -->
             <div id="connection-status"
-                style="position:absolute; bottom:10px; left:10px; font-size:0.5rem; color:#555; z-index:10;">Connecting
-                to Hive Mind Protocol...</div>
+                style="position:absolute; bottom:10px; left:10px; font-size:0.5rem; color:#555;">Connecting...</div>
 
             <script>
-                // Character Config - Realistic & Vectors
                 const CHARACTERS = {
-                    'el': { name: 'Eleven', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Eleven&backgroundColor=b6e3f4' },
-                    'mike': { name: 'Mike', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Michael&backgroundColor=c0aede' },
-                    'will': { name: 'Will', img: 'https://api.dicebear.com/9.x/micah/svg?seed=William&backgroundColor=d1d4f9' },
-                    'dustin': { name: 'Dustin', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Dust&backgroundColor=ffd5dc' },
-                    'lucas': { name: 'Lucas', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Luke&backgroundColor=ffdfbf' },
-                    'max': { name: 'Max', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Maxine&backgroundColor=f0b3ff' },
-                    'steve': { name: 'Steve', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Steve&backgroundColor=b3ffb3' },
-                    'nancy': { name: 'Nancy', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Nancy&backgroundColor=ffffba' },
-                    'jonathan': { name: 'Jonathan', img: 'https://api.dicebear.com/9.x/micah/svg?seed=Jon&backgroundColor=bfc9ff' },
-                    'vecna': { name: 'Vecna', img: './assets/vecna.png' },
-                    'demogorgon': { name: 'Demogorgon', img: './assets/demogorgon.png' }
+                    'el': { name: 'Eleven', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Jane&backgroundColor=b6e3f4' },
+                    'mike': { name: 'Mike', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Michael&backgroundColor=c0aede' },
+                    'will': { name: 'Will', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=William&backgroundColor=d1d4f9' },
+                    'dustin': { name: 'Dustin', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Dustin&backgroundColor=ffd5dc' },
+                    'lucas': { name: 'Lucas', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Lucas&backgroundColor=ffdfbf' },
+                    'max': { name: 'Max', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Maxine&backgroundColor=f0b3ff' },
+                    'steve': { name: 'Steve', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Steve&backgroundColor=b3ffb3' },
+                    'nancy': { name: 'Nancy', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Nancy&backgroundColor=ffffba' },
+                    'demogorgon': { name: 'Demogorgon', type: 'css' }
                 };
 
+                const demogorgonHTML = `
+            <div class="demogorgon-body">
+                <div class="petal p-top" style="--rot: 0deg;"></div>
+                <div class="petal p-tr" style="--rot: 72deg;"></div>
+                <div class="petal p-br" style="--rot: 144deg;"></div>
+                <div class="petal p-bl" style="--rot: 216deg;"></div>
+                <div class="petal p-tl" style="--rot: 288deg;"></div>
+                <div class="mouth-center"></div>
+            </div>`;
+
                 let myCharId = 'el';
-
                 function renderCharSelect() {
-                    const grid = document.getElementById('char-grid');
-                    grid.innerHTML = '';
-
+                    const grid = document.getElementById('char-grid'); grid.innerHTML = '';
                     Object.keys(CHARACTERS).forEach(id => {
-                        let char = CHARACTERS[id];
-                        let card = document.createElement('div');
+                        let char = CHARACTERS[id]; let card = document.createElement('div');
                         card.className = 'char-card' + (id === myCharId ? ' selected' : '');
                         card.onclick = () => { myCharId = id; renderCharSelect(); };
-
-                        let visual = `<img src="${char.img}" class="char-img">`;
+                        let visual = char.type === 'css' ? `<div style="transform:scale(0.8); height:40px;">${demogorgonHTML}</div>` : `<img src="${char.img}" class="char-img">`;
                         card.innerHTML = `${visual}<div class="char-name">${char.name}</div>`;
                         grid.appendChild(card);
                     });
                 }
-
                 function getAvatarHTML(id) {
-                    let char = CHARACTERS[id] || CHARACTERS['demogorgon'];
-                    return `<div class="char-visual"><img src="${char.img}"></div>`;
+                    let char = CHARACTERS[id] || CHARACTERS['el'];
+                    return char.type === 'css' ? `<div class="char-visual">${demogorgonHTML}</div>` : `<div class="char-visual"><img src="${char.img}"></div>`;
                 }
-
                 renderCharSelect();
 
-                // --- GAME LOGIC & STATE OVER MQTT ---
                 const BROKER_URL = 'wss://broker.emqx.io:8083/mqtt';
-                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/SYNC_RACE_V1'; // New namespace for synchronized play
+                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/SYNC_RACE_V2';
                 const ROOM_TOPIC = `${TOPIC_PREFIX}/ROOM_STATE`;
                 const PLAYERS_TOPIC = `${TOPIC_PREFIX}/PLAYERS`;
                 const HOF_TOPIC = `${TOPIC_PREFIX}/LEADERBOARD`;
 
-                let client = null;
-                let myName = "";
-                let myProgress = 0;
-
-                // Enum: LOBBY, COUNTDOWN, RACING, FINISHED
-                let currentRoomState = 'LOBBY';
-                let isClientRacing = false;
-
-                let startTime = 0;
-                let timerInterval = null;
-                let countdownTimer = null;
-                let playersMap = {}; // Tracks everyone in the room
-                let hallOfFame = [];
-                let spaceIsPressed = false;
-
+                let client, myName, myProgress = 0, currentRoomState = 'LOBBY', isClientRacing = false;
+                let startTime, timerInterval, countdownTimer, playersMap = {}, hallOfFame = [], spaceIsPressed = false;
                 const MAX_CLICKS_NEEDED = 60;
 
-                // DOM
-                const statusEl = document.getElementById('connection-status');
-                const panels = document.querySelectorAll('.panel');
-                const gameScreen = document.getElementById('game-screen');
-                const leaderboard = document.getElementById('leaderboard');
-                const trackBoard = document.getElementById('track-board');
-                const timerEl = document.getElementById('timer');
-                const countdownText = document.getElementById('countdown-text');
+                const statusEl = document.getElementById('connection-status'), panels = document.querySelectorAll('.panel'),
+                    gameScreen = document.getElementById('game-screen'), leaderboard = document.getElementById('leaderboard'),
+                    trackBoard = document.getElementById('track-board'), timerEl = document.getElementById('timer'),
+                    countdownText = document.getElementById('countdown-text'), lobbyControls = document.getElementById('lobby-controls'),
+                    raceControls = document.getElementById('race-controls');
 
-                const lobbyControls = document.getElementById('lobby-controls');
-                const raceControls = document.getElementById('race-controls');
+                function switchPanel(panelId) { panels.forEach(p => p.classList.remove('active')); if (panelId) document.getElementById(panelId).classList.add('active'); }
 
-                function switchPanel(panelId) {
-                    panels.forEach(p => p.classList.remove('active'));
-                    if (panelId) document.getElementById(panelId).classList.add('active');
-                }
-
-                // --- CONNECT TO MQTT ---
                 function initMQTT() {
                     client = mqtt.connect(BROKER_URL);
-
-                    client.on('connect', () => {
-                        statusEl.textContent = "✓ Hive Mind Connected";
-                        statusEl.style.color = "#ff0011";
-                    });
-
+                    client.on('connect', () => { statusEl.textContent = "✓ Connected"; statusEl.style.color = "var(--my-color)"; });
                     client.on('message', (topic, message) => {
-                        if (topic === HOF_TOPIC) {
-                            try {
-                                hallOfFame = JSON.parse(message.toString());
-                                renderHOF();
-                                renderStatsTable();
-                            } catch (e) { }
-                        }
-                        else if (topic === ROOM_TOPIC) {
-                            try {
-                                let payload = JSON.parse(message.toString());
-                                handleRoomStateChange(payload);
-                            } catch (e) { }
-                        }
-                        else if (topic.startsWith(`${PLAYERS_TOPIC}/`)) {
-                            let pName = topic.split('/').pop();
-                            try {
-                                let payload = JSON.parse(message.toString());
-                                handlePlayerUpdate(pName, payload);
-                            } catch (e) { }
-                        }
+                        if (topic === HOF_TOPIC) { hallOfFame = JSON.parse(message.toString()); renderHOF(); renderStatsTable(); }
+                        else if (topic === ROOM_TOPIC) { handleRoomStateChange(JSON.parse(message.toString())); }
+                        else if (topic.startsWith(`${PLAYERS_TOPIC}/`)) { handlePlayerUpdate(topic.split('/').pop(), JSON.parse(message.toString())); }
                     });
                 }
 
-                // --- JOIN LOBBY ---
                 function joinLobby() {
                     const inputName = document.getElementById('player-name').value.trim().toUpperCase();
-                    if (!inputName) return;
-                    myName = inputName;
-
-                    switchPanel(null); // Hide login
-                    gameScreen.classList.add('active');
-                    leaderboard.style.display = 'block';
-
-                    // Subscriptions happen on join to prevent receiving messages before ready
-                    client.subscribe(ROOM_TOPIC);
-                    client.subscribe(`${PLAYERS_TOPIC}/+`);
-                    client.subscribe(HOF_TOPIC);
-
-                    myProgress = 0;
-                    currentRoomState = 'LOBBY';
-                    isClientRacing = false;
-
-                    lobbyControls.style.display = 'block';
-                    raceControls.style.display = 'none';
-                    countdownText.style.display = 'none';
-
-                    // Announce presence in lobby
-                    publishMyState();
-
-                    // Render my own avatar immediately at 0%
-                    renderTrack();
+                    if (!inputName) return; myName = inputName;
+                    switchPanel(null); gameScreen.classList.add('active'); leaderboard.style.display = 'block';
+                    client.subscribe(ROOM_TOPIC); client.subscribe(`${PLAYERS_TOPIC}/+`); client.subscribe(HOF_TOPIC);
+                    myProgress = 0; currentRoomState = 'LOBBY'; isClientRacing = false;
+                    lobbyControls.style.display = 'block'; raceControls.style.display = 'none'; countdownText.style.display = 'none';
+                    publishMyState(); renderTrack();
                 }
 
-                // --- ROOM STATE HANDLING ---
                 function handleRoomStateChange(payload) {
-                    let newState = payload.status; // LOBBY, COUNTDOWN, RACING, FINISHED
-
-                    if (newState === 'COUNTDOWN' && currentRoomState === 'LOBBY') {
-                        currentRoomState = 'COUNTDOWN';
-                        let targetStartTime = payload.startTime;
-                        startSyncCountdown(targetStartTime);
-                    }
-                    else if (newState === 'LOBBY' && currentRoomState !== 'LOBBY') {
-                        // Someone reset the room to Lobby
-                        currentRoomState = 'LOBBY';
-                        isClientRacing = false;
-                        myProgress = 0;
-                        publishMyState(); // reset to 0
-
-                        lobbyControls.style.display = 'block';
-                        raceControls.style.display = 'none';
-                        countdownText.style.display = 'none';
-                        switchPanel(null); // Hide winners etc
+                    let newState = payload.status;
+                    if (newState === 'COUNTDOWN' && currentRoomState === 'LOBBY') { currentRoomState = 'COUNTDOWN'; startSyncCountdown(payload.startTime); }
+                    else if (newState === 'LOBBY') {
+                        currentRoomState = 'LOBBY'; isClientRacing = false; myProgress = 0; publishMyState();
+                        lobbyControls.style.display = 'block'; raceControls.style.display = 'none'; countdownText.style.display = 'none'; switchPanel(null);
                     }
                     else if (newState === 'FINISHED') {
-                        // A player won
-                        currentRoomState = 'FINISHED';
-                        isClientRacing = false;
-                        clearInterval(timerInterval);
-
-                        // Show winner
+                        currentRoomState = 'FINISHED'; isClientRacing = false; clearInterval(timerInterval);
                         document.getElementById('winner-name').textContent = `${payload.winner} ESCAPED!`;
                         document.getElementById('winner-time').textContent = `TIME: ${payload.time}s`;
                         switchPanel('winner-screen');
-
-                        // If I'm the winner, I already published my stats, but let's ensure cleanup.
-                        document.getElementById('sprite-' + myName).classList.remove('running');
                     }
                 }
 
-                function requestStartGame() {
-                    if (currentRoomState !== 'LOBBY') return;
-                    // Tell everyone to start counting down to a specific future time (e.g. 4 seconds from now)
-                    let futureStart = Date.now() + 4000;
-                    let payload = JSON.stringify({ status: 'COUNTDOWN', startTime: futureStart });
-                    client.publish(ROOM_TOPIC, payload, { qos: 1, retain: true });
-                }
-
-                function returnToLobby() {
-                    let payload = JSON.stringify({ status: 'LOBBY' });
-                    client.publish(ROOM_TOPIC, payload, { qos: 1, retain: true });
-                }
+                function requestStartGame() { if (currentRoomState === 'LOBBY') { client.publish(ROOM_TOPIC, JSON.stringify({ status: 'COUNTDOWN', startTime: Date.now() + 4000 }), { qos: 1, retain: true }); } }
+                function returnToLobby() { client.publish(ROOM_TOPIC, JSON.stringify({ status: 'LOBBY' }), { qos: 1, retain: true }); }
 
                 function startSyncCountdown(targetStartTime) {
-                    lobbyControls.style.display = 'none';
-                    countdownText.style.display = 'block';
-
-                    // Reset progresses locally
-                    myProgress = 0;
-                    publishMyState();
-
+                    lobbyControls.style.display = 'none'; countdownText.style.display = 'block'; myProgress = 0; publishMyState();
                     clearInterval(countdownTimer);
                     countdownTimer = setInterval(() => {
                         let diff = targetStartTime - Date.now();
                         if (diff <= 0) {
-                            clearInterval(countdownTimer);
-                            countdownText.textContent = "GO!";
-                            countdownText.style.color = "#00ffcc";
-
-                            setTimeout(() => { countdownText.style.display = 'none'; }, 1000);
-
-                            startActualRace(targetStartTime);
-                        } else {
-                            let secs = Math.ceil(diff / 1000);
-                            countdownText.textContent = secs;
-                            countdownText.style.color = "var(--st-red)";
+                            clearInterval(countdownTimer); countdownText.textContent = "GO!"; countdownText.style.color = "#00ffcc";
+                            setTimeout(() => { countdownText.style.display = 'none'; }, 1000); startActualRace(targetStartTime);
                         }
+                        else { countdownText.textContent = Math.ceil(diff / 1000); countdownText.style.color = "var(--st-red)"; }
                     }, 100);
                 }
 
                 function startActualRace(exactStart) {
-                    currentRoomState = 'RACING';
-                    isClientRacing = true;
-                    spaceIsPressed = false;
-                    raceControls.style.display = 'block';
-
-                    startTime = exactStart; // Sync timing perfectly
-
-                    clearInterval(timerInterval);
-                    timerInterval = setInterval(() => {
-                        if (isClientRacing) {
-                            let t = (Date.now() - startTime) / 1000;
-                            timerEl.textContent = t.toFixed(2) + "s";
-                        }
-                    }, 50);
+                    currentRoomState = 'RACING'; isClientRacing = true; spaceIsPressed = false; raceControls.style.display = 'block'; startTime = exactStart;
+                    clearInterval(timerInterval); timerInterval = setInterval(() => { if (isClientRacing) timerEl.textContent = ((Date.now() - startTime) / 1000).toFixed(2) + "s"; }, 50);
                 }
 
-                // --- PLAYER MECHANICS ---
                 function handlePlayerUpdate(pName, payload) {
-                    playersMap[pName] = {
-                        progress: parseFloat(payload.p),
-                        charId: payload.c,
-                        lastUpdate: Date.now()
-                    };
-
-                    // Update UI list if in lobby
-                    if (currentRoomState === 'LOBBY') {
-                        let pCount = Object.keys(playersMap).length;
-                        document.getElementById('players-waiting-text').textContent = `${pCount} SUBJECT(S) IN LOBBY...`;
-                    }
-
+                    playersMap[pName] = { progress: parseFloat(payload.p), charId: payload.c, lastUpdate: Date.now() };
+                    if (currentRoomState === 'LOBBY') document.getElementById('players-waiting-text').textContent = `${Object.keys(playersMap).length} LOBBY...`;
                     renderTrack();
                 }
 
                 function publishMyState() {
                     if (!client || !client.connected) return;
-                    let payload = JSON.stringify({ p: myProgress.toFixed(2), c: myCharId });
-                    client.publish(`${PLAYERS_TOPIC}/${myName}`, payload, { qos: 0, retain: true });
-
-                    // Instantly register myself locally too so the UI is responsive
-                    playersMap[myName] = { progress: myProgress, charId: myCharId, lastUpdate: Date.now() };
-                    renderTrack();
+                    client.publish(`${PLAYERS_TOPIC}/${myName}`, JSON.stringify({ p: myProgress.toFixed(2), c: myCharId }), { qos: 0, retain: true });
+                    playersMap[myName] = { progress: myProgress, charId: myCharId, lastUpdate: Date.now() }; renderTrack();
                 }
 
                 window.addEventListener('keydown', (e) => {
                     if (e.code === 'Space') {
-                        e.preventDefault();
-                        if (!isClientRacing || currentRoomState !== 'RACING') return;
-
-                        if (!spaceIsPressed) {
-                            spaceIsPressed = true;
-                            myProgress += (100 / MAX_CLICKS_NEEDED);
-
-                            // Simple animate
-                            let sprite = document.getElementById('sprite-' + myName);
-                            if (sprite) {
-                                sprite.classList.add('running');
-                                clearTimeout(sprite.animTimer);
-                                sprite.animTimer = setTimeout(() => { sprite.classList.remove('running'); }, 100);
-                            }
-
-                            if (myProgress >= 100) {
-                                myProgress = 100;
-                                triggerMyWin();
-                            }
-
-                            publishMyState();
-                        }
+                        e.preventDefault(); if (!isClientRacing || currentRoomState !== 'RACING' || spaceIsPressed) return;
+                        spaceIsPressed = true; myProgress += (100 / MAX_CLICKS_NEEDED);
+                        let sprite = document.getElementById('sprite-' + myName); if (sprite) { sprite.classList.add('running'); setTimeout(() => sprite.classList.remove('running'), 100); }
+                        if (myProgress >= 100) { myProgress = 100; triggerMyWin(); }
+                        publishMyState();
                     }
                 });
-
-                window.addEventListener('keyup', (e) => {
-                    if (e.code === 'Space') {
-                        spaceIsPressed = false;
-                    }
-                });
+                window.addEventListener('keyup', (e) => { if (e.code === 'Space') spaceIsPressed = false; });
 
                 function triggerMyWin() {
-                    isClientRacing = false;
-                    clearInterval(timerInterval);
-                    let finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
-                    timerEl.textContent = finalTime + "s";
-
-                    // Tell the room that I won
-                    let payload = JSON.stringify({ status: 'FINISHED', winner: myName, time: finalTime });
-                    client.publish(ROOM_TOPIC, payload, { qos: 1, retain: true });
-
-                    // Upload statistics
+                    isClientRacing = false; clearInterval(timerInterval); let finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                    client.publish(ROOM_TOPIC, JSON.stringify({ status: 'FINISHED', winner: myName, time: finalTime }), { qos: 1, retain: true });
                     checkAndUploadStats(myName, parseFloat(finalTime), myCharId);
                 }
 
-                // --- RENDERING TRACK ---
                 function renderTrack() {
-                    trackBoard.innerHTML = '<div class="finish-line"></div>'; // clear everything but finish line
-
-                    let playerNames = Object.keys(playersMap).sort(); // Keep lanes consistent
-
-                    playerNames.forEach(name => {
-                        let pData = playersMap[name];
-
-                        let lane = document.createElement('div');
-                        lane.className = 'lane';
-
-                        let sId = 'sprite-' + name;
-                        let isMe = (name === myName);
-
-                        let sprite = document.createElement('div');
-                        sprite.id = sId;
-                        sprite.className = 'player-sprite' + (isMe ? ' my-sprite' : ' ghost-sprite');
-
-                        let nameLabel = document.createElement('div');
-                        nameLabel.className = 'player-name';
-                        nameLabel.innerText = name;
-
-                        sprite.innerHTML = getAvatarHTML(pData.charId);
-                        sprite.appendChild(nameLabel);
-
+                    trackBoard.innerHTML = '<div class="finish-line"></div>';
+                    Object.keys(playersMap).sort().forEach(name => {
+                        let pData = playersMap[name], lane = document.createElement('div'); lane.className = 'lane';
+                        let sprite = document.createElement('div'); sprite.id = 'sprite-' + name;
+                        sprite.className = 'player-sprite' + (name === myName ? ' my-sprite' : ' ghost-sprite');
+                        let nameLabel = document.createElement('div'); nameLabel.className = 'player-name'; nameLabel.innerText = name;
+                        sprite.innerHTML = getAvatarHTML(pData.charId); sprite.appendChild(nameLabel);
                         sprite.style.bottom = `calc(${pData.progress}% - ${pData.progress * 0.4}px)`;
-
-                        lane.appendChild(sprite);
-                        trackBoard.appendChild(lane);
+                        lane.appendChild(sprite); trackBoard.appendChild(lane);
                     });
                 }
 
-                // Cleanup stale ghosts (only if in Lobby, to avoid poofing racers mid-race)
-                setInterval(() => {
-                    if (currentRoomState === 'LOBBY') {
-                        let now = Date.now();
-                        let changed = false;
-                        for (let name in playersMap) {
-                            if (now - playersMap[name].lastUpdate > 15000 && name !== myName) {
-                                delete playersMap[name];
-                                changed = true;
-                            }
-                        }
-                        if (changed) renderTrack();
-                    }
-                }, 5000);
-
-                // --- ADVANCED STATS LOGIC ---
                 function checkAndUploadStats(name, time, charId) {
-                    let updatedStats = [...hallOfFame];
-
-                    let existing = updatedStats.find(s => s.name === name);
-                    if (existing) {
-                        existing.wins += 1;
-                        if (time < existing.bestTime) { existing.bestTime = time; }
-                        existing.char = charId;
-                    } else {
-                        updatedStats.push({ name: name, bestTime: time, wins: 1, char: charId });
-                    }
-
+                    let updatedStats = [...hallOfFame], existing = updatedStats.find(s => s.name === name);
+                    if (existing) { existing.wins += 1; if (time < existing.bestTime) existing.bestTime = time; existing.char = charId; }
+                    else { updatedStats.push({ name: name, bestTime: time, wins: 1, char: charId }); }
                     updatedStats.sort((a, b) => a.bestTime - b.bestTime);
                     if (updatedStats.length > 20) updatedStats = updatedStats.slice(0, 20);
-
-                    if (client && client.connected) {
-                        client.publish(HOF_TOPIC, JSON.stringify(updatedStats), { qos: 1, retain: true });
-                    }
+                    if (client && client.connected) client.publish(HOF_TOPIC, JSON.stringify(updatedStats), { qos: 1, retain: true });
                 }
 
                 function renderHOF() {
-                    const hofListDisplay = document.getElementById('hof-list');
-                    hofListDisplay.innerHTML = '';
-                    if (hallOfFame.length === 0) {
-                        hofListDisplay.innerHTML = '<div class="hof-entry">No records yet.</div>';
-                        return;
-                    }
-
-                    const top5 = hallOfFame.slice(0, 5);
-                    top5.forEach((entry, idx) => {
-                        let div = document.createElement('div');
-                        div.className = 'hof-entry';
-                        let trophy = idx === 0 ? '👑' : '';
-                        div.innerHTML = `<span>${idx + 1}. ${trophy} ${entry.name}</span> <span class="time">${entry.bestTime.toFixed(2)}s</span>`;
-                        hofListDisplay.appendChild(div);
+                    const hDisplay = document.getElementById('hof-list'); hDisplay.innerHTML = '';
+                    if (hallOfFame.length === 0) { hDisplay.innerHTML = '<div class="hof-entry">Empty.</div>'; return; }
+                    hallOfFame.slice(0, 5).forEach((entry, idx) => {
+                        let div = document.createElement('div'); div.className = 'hof-entry';
+                        div.innerHTML = `<span>${idx + 1}. ${idx === 0 ? '👑' : ''} ${entry.name}</span> <span class="time">${entry.bestTime.toFixed(2)}s</span>`;
+                        hDisplay.appendChild(div);
                     });
                 }
 
                 function renderStatsTable() {
-                    const tbody = document.getElementById('stats-body');
-                    tbody.innerHTML = '';
+                    const tbody = document.getElementById('stats-body'); tbody.innerHTML = '';
                     hallOfFame.forEach((entry) => {
-                        let charData = CHARACTERS[entry.char] || CHARACTERS['demogorgon'];
+                        let charData = CHARACTERS[entry.char] || CHARACTERS['el'];
                         let tr = document.createElement('tr');
-                        tr.innerHTML = `
-                    <td style="font-weight:bold; color:var(--my-color);">${entry.name}</td>
-                    <td><img src="${charData.img}" style="width:24px; height:24px; border-radius:4px; vertical-align:middle;"> ${charData.name}</td>
-                    <td>${entry.bestTime.toFixed(2)}</td>
-                    <td style="color:var(--st-red);">${entry.wins}</td>
-                `;
+                        tr.innerHTML = `<td style="font-weight:bold; color:var(--my-color);">${entry.name}</td><td>${charData.name}</td><td>${entry.bestTime.toFixed(2)}</td><td style="color:var(--st-red);">${entry.wins}</td>`;
                         tbody.appendChild(tr);
                     });
                 }
 
                 initMQTT();
-
             </script>
 </body>
 
