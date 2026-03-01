@@ -72,7 +72,7 @@
 
         h1 {
             font-family: 'Rubik Glitch', cursive;
-            font-size: 3rem;
+            font-size: 2.5rem;
             color: transparent;
             -webkit-text-stroke: 2px var(--st-red);
             text-shadow: 0 0 15px var(--st-red);
@@ -95,26 +95,83 @@
             background: rgba(10, 0, 0, 0.9);
             border: 2px solid var(--st-red);
             box-shadow: 0 0 30px rgba(255, 0, 17, 0.5), inset 0 0 20px rgba(255, 0, 0, 0.2);
-            padding: 40px;
+            padding: 30px;
             text-align: center;
             z-index: 100;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* Character Grid */
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px dotted #444;
+        }
+
+        /* Custom Scrollbar */
+        .char-grid::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .char-grid::-webkit-scrollbar-thumb {
+            background: var(--st-red);
+        }
+
+        .char-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 5px;
+            text-align: center;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .char-card:hover {
+            border-color: var(--my-color);
+            box-shadow: 0 0 10px var(--my-color);
+        }
+
+        .char-card.selected {
+            border-color: var(--st-red);
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 15px var(--st-red);
+        }
+
+        .char-img {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 5px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .char-name {
+            font-size: 0.45rem;
+            color: #fff;
+            margin-top: auto;
         }
 
         input {
             background: #000;
             border: 1px solid var(--st-red);
             color: #fff;
-            padding: 15px;
+            padding: 10px;
             font-family: 'Press Start 2P', cursive;
             font-size: 0.8rem;
             outline: none;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             text-align: center;
             width: 100%;
-        }
-
-        input:focus {
-            box-shadow: 0 0 10px var(--st-red);
         }
 
         button {
@@ -190,7 +247,7 @@
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
         }
 
-        /* CSS Demogorgon Sprite */
+        /* Player Sprite System */
         .player-sprite {
             position: absolute;
             bottom: 10px;
@@ -202,16 +259,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-end;
+            /* Align content to bottom so name is at top */
         }
 
-        .demogorgon-body {
+        .char-visual {
+            width: 50px;
+            height: 50px;
             position: relative;
+        }
+
+        /* Demogorgon CSS implementation */
+        .demogorgon-body {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 40px;
             height: 40px;
             animation: breathe 0.5s infinite alternate;
         }
 
-        /* The 5 Petal Mouth */
         .petal {
             position: absolute;
             background: var(--st-red);
@@ -264,7 +332,6 @@
             z-index: 2;
         }
 
-        /* Spiky teeth inside center */
         .mouth-center::after {
             content: '';
             position: absolute;
@@ -278,15 +345,14 @@
 
         @keyframes breathe {
             0% {
-                transform: scale(1);
+                transform: translate(-50%, -50%) scale(1);
             }
 
             100% {
-                transform: scale(1.1);
+                transform: translate(-50%, -50%) scale(1.1);
             }
         }
 
-        /* Running animation for petals */
         .running .petal {
             animation: chomp 0.2s infinite alternate;
         }
@@ -302,16 +368,17 @@
         }
 
         .player-name {
-            font-size: 0.5rem;
+            font-size: 0.45rem;
             color: #888;
             white-space: nowrap;
             margin-top: 5px;
             background: rgba(0, 0, 0, 0.8);
             padding: 2px 5px;
             border: 1px solid #444;
+            position: absolute;
+            bottom: -15px;
         }
 
-        /* Distinct look for the user's sprite */
         .my-sprite .petal {
             background: var(--my-color);
             box-shadow: 0 0 10px var(--my-color);
@@ -321,6 +388,11 @@
             color: var(--my-color);
             border-color: var(--my-color);
             border-radius: 3px;
+        }
+
+        .my-sprite img {
+            border: 2px solid var(--my-color) !important;
+            box-shadow: 0 0 15px var(--my-color);
         }
 
         /* Controls / HUD on the Left */
@@ -373,6 +445,7 @@
             justify-content: space-between;
             margin-bottom: 8px;
             letter-spacing: 1px;
+            align-items: center;
         }
 
         .hof-entry span.time {
@@ -474,7 +547,7 @@
 
             <header>
                 <h1>RUN</h1>
-                <p>ESCAPE THE UPSIDE DOWN (MQTT MULTIPLAYER)</p>
+                <p>ESCAPE THE UPSIDE DOWN</p>
             </header>
 
             <!-- Leaderboard -->
@@ -488,11 +561,14 @@
             <!-- Login -->
             <div id="login-screen">
                 <h2
-                    style="margin-bottom: 10px; font-family: 'Creepster', cursive; font-size: 2.5rem; color: #fff; letter-spacing: 3px;">
-                    ENTER THE VOID</h2>
-                <p style="margin-bottom: 20px;">Identity Required</p>
+                    style="margin-bottom: 10px; font-family: 'Creepster', cursive; font-size: 2rem; color: #fff; letter-spacing: 3px;">
+                    CHOOSE AVATAR</h2>
+
+                <div class="char-grid" id="char-grid">
+                    <!-- Injected via JS -->
+                </div>
+
                 <input type="text" id="player-name" placeholder="YOUR CODENAME" maxlength="12" value="Oracle">
-                <br>
                 <button onclick="joinGame()">HUNT</button>
             </div>
 
@@ -527,7 +603,21 @@
             <div id="connection-status">Connecting to Demogorgon Hive Mind...</div>
 
             <script>
-                // HTML Template for Demogorgon Character
+                // Character Config
+                const CHARACTERS = {
+                    'el': { name: 'Eleven', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Jane&backgroundColor=b6e3f4' },
+                    'mike': { name: 'Mike', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Michael&backgroundColor=c0aede' },
+                    'will': { name: 'Will', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=William&backgroundColor=d1d4f9' },
+                    'dustin': { name: 'Dustin', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Dustin&backgroundColor=ffd5dc' },
+                    'lucas': { name: 'Lucas', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Lucas&backgroundColor=ffdfbf' },
+                    'max': { name: 'Max', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Maxine&backgroundColor=f0b3ff' },
+                    'steve': { name: 'Steve', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Steve&backgroundColor=b3ffb3' },
+                    'nancy': { name: 'Nancy', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Nancy&backgroundColor=ffffba' },
+                    'jonathan': { name: 'Jonathan', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Jonathan&backgroundColor=bfc9ff' },
+                    'vecna': { name: 'Vecna', img: 'https://api.dicebear.com/9.x/pixel-art/svg?seed=Vecna&backgroundColor=8b0000' },
+                    'demogorgon': { name: 'Demogorgon', type: 'css' }
+                };
+
                 const demogorgonHTML = `
             <div class="demogorgon-body">
                 <div class="petal p-top" style="--rot: 0deg;"></div>
@@ -539,9 +629,44 @@
             </div>
         `;
 
+                let myCharId = 'el'; // default
+
+                function renderCharSelect() {
+                    const grid = document.getElementById('char-grid');
+                    grid.innerHTML = '';
+
+                    Object.keys(CHARACTERS).forEach(id => {
+                        let char = CHARACTERS[id];
+                        let card = document.createElement('div');
+                        card.className = 'char-card' + (id === myCharId ? ' selected' : '');
+                        card.onclick = () => { myCharId = id; renderCharSelect(); };
+
+                        let visual = '';
+                        if (char.type === 'css') {
+                            visual = `<div style="width:40px; height:40px; position:relative; transform:scale(0.8); margin:0 auto; padding-top:20px;">${demogorgonHTML}</div>`;
+                        } else {
+                            visual = `<img src="${char.img}" class="char-img">`;
+                        }
+
+                        card.innerHTML = `${visual}<div class="char-name">${char.name}</div>`;
+                        grid.appendChild(card);
+                    });
+                }
+
+                function getAvatarHTML(id) {
+                    let char = CHARACTERS[id] || CHARACTERS['demogorgon'];
+                    if (char.type === 'css') {
+                        return `<div class="char-visual">${demogorgonHTML}</div>`;
+                    } else {
+                        return `<div class="char-visual"><img src="${char.img}" style="width:100%; height:100%; border-radius:5px; border:2px solid #555;"></div>`;
+                    }
+                }
+
+                renderCharSelect();
+
                 // --- GAME LOGIC & STATE ---
                 const BROKER_URL = 'wss://broker.emqx.io:8083/mqtt';
-                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/RACE_V2'; // Version 2 logic
+                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/RACE_V3';
                 const PLAYERS_TOPIC = `${TOPIC_PREFIX}/PLAYERS`;
                 const HOF_TOPIC = `${TOPIC_PREFIX}/LEADERBOARD`;
 
@@ -589,11 +714,15 @@
 
                         if (topic.startsWith(`${PLAYERS_TOPIC}/`)) {
                             let playerName = topic.split('/').pop();
-                            let progress = parseFloat(message.toString());
+                            try {
+                                let payload = JSON.parse(message.toString());
+                                let progress = parseFloat(payload.p);
+                                let charId = payload.c;
 
-                            if (playerName !== myName) {
-                                updateGhost(playerName, progress);
-                            }
+                                if (playerName !== myName) {
+                                    updateGhost(playerName, progress, charId);
+                                }
+                            } catch (e) { }
                         }
                     });
                 }
@@ -650,8 +779,10 @@
 
                 function publishProgress() {
                     if (!client || !client.connected) return;
-                    client.publish(`${PLAYERS_TOPIC}/${myName}`, myProgress.toString(), { qos: 0 });
+                    let payload = JSON.stringify({ p: myProgress.toFixed(2), c: myCharId });
+                    client.publish(`${PLAYERS_TOPIC}/${myName}`, payload, { qos: 0 });
                 }
+
 
                 function updateMySprite(isReset) {
                     let sprite = document.getElementById('sprite-my');
@@ -667,7 +798,7 @@
                         nameLabel.className = 'player-name';
                         nameLabel.innerText = myName;
 
-                        sprite.innerHTML = demogorgonHTML;
+                        sprite.innerHTML = getAvatarHTML(myCharId);
                         sprite.appendChild(nameLabel);
 
                         lane.appendChild(sprite);
@@ -677,18 +808,16 @@
                     // Animate mouth on press
                     if (!isReset) {
                         sprite.classList.add('running');
-                        // clear animation shortly after
                         clearTimeout(sprite.animTimer);
                         sprite.animTimer = setTimeout(() => {
                             sprite.classList.remove('running');
                         }, 150);
                     }
 
-                    // Vertical position (0% bottom to 100% top minus height offset)
                     sprite.style.bottom = `calc(${myProgress}% - ${myProgress * 0.4}px)`;
                 }
 
-                function updateGhost(name, progress) {
+                function updateGhost(name, progress, charId) {
                     players[name] = { progress: progress, lastUpdate: Date.now() };
 
                     let safeId = "sprite-ghost-" + name.replace(/[^a-zA-Z0-9]/g, '');
@@ -706,7 +835,7 @@
                         nameLabel.className = 'player-name';
                         nameLabel.innerText = name;
 
-                        sprite.innerHTML = demogorgonHTML;
+                        sprite.innerHTML = getAvatarHTML(charId);
                         sprite.appendChild(nameLabel);
 
                         lane.appendChild(sprite);
@@ -748,7 +877,6 @@
                     let finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
                     timerEl.textContent = finalTime + "s";
 
-                    // Stop animation
                     let sprite = document.getElementById('sprite-my');
                     if (sprite) sprite.classList.remove('running');
 
@@ -756,7 +884,7 @@
                     document.getElementById('winner-time').textContent = `TIME: ${finalTime}s`;
                     winnerScreen.style.display = 'block';
 
-                    checkAndUploadHOF(myName, parseFloat(finalTime));
+                    checkAndUploadHOF(myName, parseFloat(finalTime), myCharId);
                 }
 
                 function resetGame() {
@@ -769,10 +897,10 @@
                 }
 
                 // --- LEADERBOARD LOGIC ---
-                function checkAndUploadHOF(name, timeStr) {
+                function checkAndUploadHOF(name, timeStr, charId) {
                     let time = parseFloat(timeStr);
                     let newHof = [...hallOfFame];
-                    newHof.push({ name: name, time: time });
+                    newHof.push({ name: name, time: time, char: charId });
                     newHof.sort((a, b) => a.time - b.time);
                     if (newHof.length > 5) newHof = newHof.slice(0, 5);
 
@@ -792,7 +920,8 @@
                         let div = document.createElement('div');
                         div.className = 'hof-entry';
                         let trophy = idx === 0 ? '👑' : '';
-                        div.innerHTML = `<span>${idx + 1}. ${trophy} ${entry.name}</span> <span class="time">${entry.time.toFixed(2)}s</span>`;
+                        let cName = CHARACTERS[entry.char] ? CHARACTERS[entry.char].name : '';
+                        div.innerHTML = `<span>${idx + 1}. ${trophy} ${entry.name} <small style="color:#666;">(${cName})</small></span> <span class="time">${entry.time.toFixed(2)}s</span>`;
                         hofList.appendChild(div);
                     });
                 }
