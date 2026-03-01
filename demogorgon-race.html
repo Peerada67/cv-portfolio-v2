@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demogorgon Sprint // True Multiplayer</title>
+    <title>Demogorgon Sprint // 8-Bit Sync</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Creepster&family=Rubik+Glitch&family=Press+Start+2P&display=swap"
@@ -151,7 +151,7 @@
             margin-bottom: 15px;
             max-height: 250px;
             overflow-y: auto;
-            padding: 5px;
+            padding: 10px;
             border: 1px dotted #444;
         }
 
@@ -168,7 +168,7 @@
             border: 2px solid #444;
             border-radius: 8px;
             cursor: pointer;
-            padding: 5px;
+            padding: 8px;
             text-align: center;
             transition: 0.2s;
             display: flex;
@@ -278,6 +278,7 @@
             justify-content: space-around;
             width: 60%;
             position: relative;
+            min-height: 400px;
         }
 
         .lane {
@@ -582,7 +583,7 @@
             <div id="leaderboard">
                 <h3>🏆 HALL OF FAME</h3>
                 <div id="hof-list">
-                    <div class="hof-entry">Loading Matrix...</div>
+                    <div class="hof-entry">Ready...</div>
                 </div>
                 <button class="btn-small btn-green" style="width:100%; margin-top:10px;"
                     onclick="document.getElementById('stats-modal').classList.add('active')">VIEW LAB DATA</button>
@@ -594,7 +595,7 @@
                     SUBJECT ID</h2>
                 <div class="char-grid" id="char-grid"></div>
                 <input type="text" id="player-name" placeholder="YOUR CODENAME" maxlength="12" value="Oracle">
-                <button onclick="joinLobby()">ENTER THE VOID</button>
+                <button onclick="joinLobby()">ENTER LOBBY</button>
             </div>
 
             <div id="stats-modal" class="panel"
@@ -672,15 +673,7 @@
                     'demogorgon': { name: 'Demogorgon', type: 'css' }
                 };
 
-                const demogorgonHTML = `
-            <div class="demogorgon-body">
-                <div class="petal p-top" style="--rot: 0deg;"></div>
-                <div class="petal p-tr" style="--rot: 72deg;"></div>
-                <div class="petal p-br" style="--rot: 144deg;"></div>
-                <div class="petal p-bl" style="--rot: 216deg;"></div>
-                <div class="petal p-tl" style="--rot: 288deg;"></div>
-                <div class="mouth-center"></div>
-            </div>`;
+                const demogorgonHTML = `<div class="demogorgon-body"><div class="petal p-top" style="--rot: 0deg;"></div><div class="petal p-tr" style="--rot: 72deg;"></div><div class="petal p-br" style="--rot: 144deg;"></div><div class="petal p-bl" style="--rot: 216deg;"></div><div class="petal p-tl" style="--rot: 288deg;"></div><div class="mouth-center"></div></div>`;
 
                 let myCharId = 'el';
                 function renderCharSelect() {
@@ -701,7 +694,7 @@
                 renderCharSelect();
 
                 const BROKER_URL = 'wss://broker.emqx.io:8083/mqtt';
-                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/SYNC_RACE_V2';
+                const TOPIC_PREFIX = 'TWO_RIVERS_ORACLE/SYNC_RACE_V3'; // BUMPED TOPIC
                 const ROOM_TOPIC = `${TOPIC_PREFIX}/ROOM_STATE`;
                 const PLAYERS_TOPIC = `${TOPIC_PREFIX}/PLAYERS`;
                 const HOF_TOPIC = `${TOPIC_PREFIX}/LEADERBOARD`;
@@ -720,36 +713,53 @@
 
                 function initMQTT() {
                     client = mqtt.connect(BROKER_URL);
-                    client.on('connect', () => { statusEl.textContent = "✓ Connected"; statusEl.style.color = "var(--my-color)"; });
+                    client.on('connect', () => {
+                        statusEl.textContent = "✓ Connected"; statusEl.style.color = "var(--my-color)";
+                        client.subscribe(ROOM_TOPIC); client.subscribe(`${PLAYERS_TOPIC}/+`); client.subscribe(HOF_TOPIC);
+                        if (myName) publishMyState(); // If already joined, ensure server knows
+                    });
                     client.on('message', (topic, message) => {
-                        if (topic === HOF_TOPIC) { hallOfFame = JSON.parse(message.toString()); renderHOF(); renderStatsTable(); }
-                        else if (topic === ROOM_TOPIC) { handleRoomStateChange(JSON.parse(message.toString())); }
-                        else if (topic.startsWith(`${PLAYERS_TOPIC}/`)) { handlePlayerUpdate(topic.split('/').pop(), JSON.parse(message.toString())); }
+                        if (topic === HOF_TOPIC) {
+                            try { hallOfFame = JSON.parse(message.toString()); renderHOF(); renderStatsTable(); } catch (e) { }
+                        }
+                        else if (topic === ROOM_TOPIC) {
+                            try { handleRoomStateChange(JSON.parse(message.toString())); } catch (e) { }
+                        }
+                        else if (topic.startsWith(`${PLAYERS_TOPIC}/`)) {
+                            try { handlePlayerUpdate(topic.split('/').pop(), JSON.parse(message.toString())); } catch (e) { }
+                        }
                     });
                 }
 
                 function joinLobby() {
                     const inputName = document.getElementById('player-name').value.trim().toUpperCase();
                     if (!inputName) return; myName = inputName;
+
                     switchPanel(null); gameScreen.classList.add('active'); leaderboard.style.display = 'block';
-                    client.subscribe(ROOM_TOPIC); client.subscribe(`${PLAYERS_TOPIC}/+`); client.subscribe(HOF_TOPIC);
+
                     myProgress = 0; currentRoomState = 'LOBBY'; isClientRacing = false;
                     lobbyControls.style.display = 'block'; raceControls.style.display = 'none'; countdownText.style.display = 'none';
-                    publishMyState(); renderTrack();
+
+                    // ENSURE WE ARE IN THE MAP
+                    playersMap[myName] = { progress: 0, charId: myCharId, lastUpdate: Date.now() };
+                    publishMyState();
+                    renderTrack();
                 }
 
                 function handleRoomStateChange(payload) {
                     let newState = payload.status;
                     if (newState === 'COUNTDOWN' && currentRoomState === 'LOBBY') { currentRoomState = 'COUNTDOWN'; startSyncCountdown(payload.startTime); }
                     else if (newState === 'LOBBY') {
-                        currentRoomState = 'LOBBY'; isClientRacing = false; myProgress = 0; publishMyState();
+                        currentRoomState = 'LOBBY'; isClientRacing = false; myProgress = 0;
                         lobbyControls.style.display = 'block'; raceControls.style.display = 'none'; countdownText.style.display = 'none'; switchPanel(null);
+                        publishMyState(); renderTrack();
                     }
                     else if (newState === 'FINISHED') {
                         currentRoomState = 'FINISHED'; isClientRacing = false; clearInterval(timerInterval);
                         document.getElementById('winner-name').textContent = `${payload.winner} ESCAPED!`;
                         document.getElementById('winner-time').textContent = `TIME: ${payload.time}s`;
                         switchPanel('winner-screen');
+                        renderTrack();
                     }
                 }
 
@@ -775,22 +785,24 @@
                 }
 
                 function handlePlayerUpdate(pName, payload) {
+                    if (pName === myName) return; // Skip our own echo to avoid jitter
                     playersMap[pName] = { progress: parseFloat(payload.p), charId: payload.c, lastUpdate: Date.now() };
-                    if (currentRoomState === 'LOBBY') document.getElementById('players-waiting-text').textContent = `${Object.keys(playersMap).length} LOBBY...`;
+                    if (currentRoomState === 'LOBBY') document.getElementById('players-waiting-text').textContent = (Object.keys(playersMap).length) + " READY...";
                     renderTrack();
                 }
 
                 function publishMyState() {
-                    if (!client || !client.connected) return;
-                    client.publish(`${PLAYERS_TOPIC}/${myName}`, JSON.stringify({ p: myProgress.toFixed(2), c: myCharId }), { qos: 0, retain: true });
-                    playersMap[myName] = { progress: myProgress, charId: myCharId, lastUpdate: Date.now() }; renderTrack();
+                    playersMap[myName] = { progress: myProgress, charId: myCharId, lastUpdate: Date.now() };
+                    renderTrack(); // RENDER IMMEDIATELY
+                    if (client && client.connected) {
+                        client.publish(`${PLAYERS_TOPIC}/${myName}`, JSON.stringify({ p: myProgress.toFixed(2), c: myCharId }), { qos: 0, retain: true });
+                    }
                 }
 
                 window.addEventListener('keydown', (e) => {
                     if (e.code === 'Space') {
                         e.preventDefault(); if (!isClientRacing || currentRoomState !== 'RACING' || spaceIsPressed) return;
                         spaceIsPressed = true; myProgress += (100 / MAX_CLICKS_NEEDED);
-                        let sprite = document.getElementById('sprite-' + myName); if (sprite) { sprite.classList.add('running'); setTimeout(() => sprite.classList.remove('running'), 100); }
                         if (myProgress >= 100) { myProgress = 100; triggerMyWin(); }
                         publishMyState();
                     }
@@ -804,12 +816,16 @@
                 }
 
                 function renderTrack() {
+                    if (!trackBoard) return;
                     trackBoard.innerHTML = '<div class="finish-line"></div>';
-                    Object.keys(playersMap).sort().forEach(name => {
-                        let pData = playersMap[name], lane = document.createElement('div'); lane.className = 'lane';
-                        let sprite = document.createElement('div'); sprite.id = 'sprite-' + name;
+                    const names = Object.keys(playersMap).sort();
+                    names.forEach(name => {
+                        const pData = playersMap[name];
+                        const lane = document.createElement('div'); lane.className = 'lane';
+                        const sprite = document.createElement('div'); sprite.id = 'sprite-' + name;
                         sprite.className = 'player-sprite' + (name === myName ? ' my-sprite' : ' ghost-sprite');
-                        let nameLabel = document.createElement('div'); nameLabel.className = 'player-name'; nameLabel.innerText = name;
+                        if (spaceIsPressed && name === myName) sprite.classList.add('running'); // Local animation
+                        const nameLabel = document.createElement('div'); nameLabel.className = 'player-name'; nameLabel.innerText = name;
                         sprite.innerHTML = getAvatarHTML(pData.charId); sprite.appendChild(nameLabel);
                         sprite.style.bottom = `calc(${pData.progress}% - ${pData.progress * 0.4}px)`;
                         lane.appendChild(sprite); trackBoard.appendChild(lane);
@@ -827,7 +843,7 @@
 
                 function renderHOF() {
                     const hDisplay = document.getElementById('hof-list'); hDisplay.innerHTML = '';
-                    if (hallOfFame.length === 0) { hDisplay.innerHTML = '<div class="hof-entry">Empty.</div>'; return; }
+                    if (hallOfFame.length === 0) { hDisplay.innerHTML = '<div class="hof-entry">Ready...</div>'; return; }
                     hallOfFame.slice(0, 5).forEach((entry, idx) => {
                         let div = document.createElement('div'); div.className = 'hof-entry';
                         div.innerHTML = `<span>${idx + 1}. ${idx === 0 ? '👑' : ''} ${entry.name}</span> <span class="time">${entry.bestTime.toFixed(2)}s</span>`;
