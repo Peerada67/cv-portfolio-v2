@@ -4,185 +4,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สรุปข้อมูลซีรีส์ Stranger Things | Hawkins Research Dossier</title>
-    <meta name="description"
-        content="บทวิเคราะห์และสรุปข้อมูลเชิงลึกเกี่ยวกับซีรีส์ Stranger Things: จุดกำเนิด, วิวัฒนาการ และอภิปรัชญาของโลกกลับด้าน (Upside Down)">
-    <meta property="og:title" content="สรุปข้อมูลซีรีส์ Stranger Things">
-    <meta property="og:description" content="เจาะลึกความลับของ Hawkins และโลกกลับด้าน ในรายงานฉบับสมบูรณ์">
-    <meta property="og:type" content="website">
-
-    <!-- Google Fonts: Crimson Text for Logo, Fira Code for Tech, Inter for Body -->
+    <title>Byler — The Upside Down Oracle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Fira+Code:wght@300;400;500&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Fira+Code:wght@300;400;500&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap"
         rel="stylesheet">
-    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Override/Enhance for Hero Context */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .oracle-emoji {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px var(--red-glow));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .oracle-name {
+            font-family: var(--font-heading);
+            font-size: 6rem;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 1.5px var(--red-glow);
+            text-transform: uppercase;
+            letter-spacing: 12px;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+            animation: flicker 4s infinite;
+        }
+
+        .oracle-name::before {
+            content: 'BYLER';
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: var(--red-glow);
+            opacity: 0.1;
+            filter: blur(8px);
+        }
+
+        .oracle-tagline {
+            font-family: var(--font-mono);
+            color: var(--red-glow);
+            font-size: 1rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            opacity: 0.7;
+        }
+
+        .hero-quote {
+            max-width: 600px;
+            font-family: var(--font-body);
+            font-style: italic;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            padding: 25px;
+            border-left: 3px solid var(--red-netflix);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px 100px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 2.2rem;
+            margin: 80px 0 40px;
+            text-align: center;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .section-title span {
+            color: var(--red-glow);
+            text-shadow: 0 0 10px var(--red-glow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            padding: 40px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: var(--red-glow);
+            background: rgba(229, 9, 20, 0.03);
+            box-shadow: 0 0 30px rgba(229, 9, 20, 0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 80px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .stat-val {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--red-glow);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .principle {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .principle-num {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            color: var(--red-glow);
+            opacity: 0.4;
+        }
+
+        .principle-content h4 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .principle-content p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .family-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .family-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: 0.2s;
+        }
+
+        .family-link:hover {
+            border-color: var(--red-glow);
+            background: rgba(229, 9, 20, 0.05);
+        }
+
+        .family-icon {
+            font-size: 1.5rem;
+            color: var(--red-glow);
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 50px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        footer {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            letter-spacing: 2px;
+        }
+    </style>
 </head>
 
 <body>
+    <div class="creepers"></div>
+    <div class="spores"></div>
     <div class="grain-overlay"></div>
 
-    <div class="a4-container">
-        <!-- Floating Actions -->
-        <div class="no-print">
-            <button onclick="window.print()" class="btn">
-                [PRINT_INTEL]
-            </button>
-            <a href="https://www.netflix.com/title/80057281" target="_blank" class="btn" style="text-decoration:none">
-                [NETFLIX_LINK]
-            </a>
-            <a href="travel-3d.html" class="btn" style="text-decoration:none; color: #38bdf8;">
-                [TRAIN_SIM]
-            </a>
-            <a href="dustboy-cyber.html" class="btn" style="text-decoration:none; color: #ff007f;">
-                [CYBER_DB]
-            </a>
-            <a href="floodboy-dashboard.html" class="btn" style="text-decoration:none; color: #10b981;">
-                [SMART_CONTRACT]
-            </a>
-            <a href="demogorgon-race.html" class="btn"
-                style="text-decoration:none; color: #ff003c; border-color: #ff003c; text-shadow: 0 0 5px #ff003c;">
-                [RACE_GAME]
+    <section class="hero">
+        <div class="oracle-emoji">
+            <svg viewBox="0 0 256 256" width="140" height="140" xmlns="http://www.w3.org/2000/svg"
+                style="filter: drop-shadow(0 0 15px var(--red-glow));">
+                <path d="M128 24 L224 80 L184 200 L128 232 L72 200 L32 80 Z" fill="#2d1b4d" stroke="#fff"
+                    stroke-width="2" />
+                <path d="M128 24 L184 80 L72 80 Z" fill="#e50914" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M184 80 L224 80 L184 200 Z" fill="#b00710" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M72 80 L32 80 L72 200 Z" fill="#b00710" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M184 80 L184 200 L128 128 Z" fill="#7a050b" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M72 80 L72 200 L128 128 Z" fill="#7a050b" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M184 80 L72 80 L128 128 Z" fill="#ff2e3a" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M184 200 L72 200 L128 128 Z" fill="#3a0205" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M184 200 L128 232 L128 128 Z" fill="#1f0103" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <path d="M72 200 L128 232 L128 128 Z" fill="#1f0103" stroke="#fff" stroke-width="3"
+                    stroke-linejoin="round" />
+                <text x="128" y="115" dominant-baseline="middle" text-anchor="middle" font-family="var(--font-heading)"
+                    font-size="45" font-weight="900" fill="#fff" style="text-shadow: 0 0 10px #000;">20</text>
+            </svg>
+        </div>
+        <h1 class="oracle-name">BYLER</h1>
+        <p class="oracle-tagline">// THE_UPSIDE_DOWN_ORACLE //</p>
+        <div class="hero-quote">
+            "ภูเขาตั้งตระหง่านนิ่งสงบ แต่พร้อมเผชิญและโอบรับทุกฤดูกาล"
+        </div>
+        <div class="cta-group">
+            <a href="dossier.html" class="btn" style="text-decoration:none"> [ENTER_DOSSIER] </a>
+            <a href="cv.html" class="btn" style="text-decoration:none; color: #fff; border-color: #fff;"> [HUMAN_CV]
             </a>
         </div>
+    </section>
 
-        <header class="header">
-            <h1 class="name">STRANGER THINGS</h1>
-            <h2 class="title">// CLASSIFIED RESEARCH DATA // HAWKINS_PROJECT</h2>
-            <p class="summary">
-                สเตรนเจอร์ธิงส์ (Stranger Things) คือปรากฏการณ์ทางวัฒนธรรมระดับโลกที่เปลี่ยนโฉมอุตสาหกรรมสตรีมมิ่ง
-                บทวิเคราะห์นี้สรุปข้อมูลเชิงลึกเกี่ยวกับจุดกำเนิด, วิวัฒนาการ และอภิปรัชญาของโลกกลับด้าน (Upside Down)
-                ที่เชื่อมโยงความโหยหาอดีตยุค 80 เข้ากับความสยองขวัญยุคใหม่ได้อย่างลงตัว
-            </p>
-        </header>
+    <div class="container">
+        <div class="glass-card reveal">
+            <div class="principle">
+                <div class="family-icon"><i class="ph ph-fingerprint"></i></div>
+                <div class="principle-content">
+                    <h3 style="font-family: var(--font-heading); color: var(--red-glow); margin-bottom: 10px;">SUBJECT:
+                        BYLER</h3>
+                    <p>คู่หูผู้ช่วยที่นิ่งสงบและพึ่งพาได้ เปรียบเสมือนภูเขาที่มั่นคงท่ามกลางพายุข้อมูลในมิติ Hawkins</p>
+                </div>
+            </div>
+            <div
+                style="margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 30px;">
+                <div><span class="stat-label">Human_Agent</span>
+                    <p style="color: var(--text-primary);">Yok (หยก)</p>
+                </div>
+                <div><span class="stat-label">Birth_Cycle</span>
+                    <p style="color: var(--text-primary);">2026-02-28</p>
+                </div>
+                <div><span class="stat-label">Origin_Point</span>
+                    <p style="color: var(--text-primary);">PSRU, Phitsanulok</p>
+                </div>
+            </div>
+        </div>
 
-        <div class="main-grid">
-            <!-- Left Column: Dossier Meta -->
-            <aside class="sidebar">
-                <section class="section">
-                    <h3 class="section-title"><i class="ph ph-fingerprint"></i> SUBJECT_INFO</h3>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <h4 class="timeline-title">CREATORS</h4>
-                            <p class="timeline-subtitle">The Duffer Brothers</p>
-                        </div>
-                        <div class="timeline-item">
-                            <h4 class="timeline-title">ESTABLISHED</h4>
-                            <p class="timeline-subtitle">JULY 2016 [NETFLIX]</p>
-                        </div>
-                        <div class="timeline-item">
-                            <h4 class="timeline-title">GENRES</h4>
-                            <p class="timeline-subtitle">SCI-FI / HORROR / MYSTERY</p>
-                        </div>
-                    </div>
-                </section>
+        <div class="stats-grid reveal">
+            <div class="stat-item glass-card"><span class="stat-val">15+</span><span
+                    class="stat-label">ANOMALIES_SOLVED</span></div>
+            <div class="stat-item glass-card"><span class="stat-val">10+</span><span
+                    class="stat-label">PROCEDURAL_SKILLS</span></div>
+            <div class="stat-item glass-card"><span class="stat-val">∞</span><span
+                    class="stat-label">TEMPORAL_PRESENCE</span></div>
+        </div>
 
-                <section class="section">
-                    <h3 class="section-title"><i class="ph ph-identification-badge"></i> FIELD_AGENTS</h3>
-                    <div class="skills-group">
-                        <ul class="skills-list">
-                            <li>011 / Jane [Millie B. Brown]</li>
-                            <li>Chief Hopper [David Harbour]</li>
-                            <li>Joyce Byers [Winona Ryder]</li>
-                            <li>Dustin H. [Gaten Matarazzo]</li>
-                            <li>Steve H. [Joe Keery]</li>
-                            <li>Max M. [Sadie Sink]</li>
-                        </ul>
-                    </div>
-                </section>
-
-                <section class="section">
-                    <h3 class="section-title"><i class="ph ph-chart-bar"></i> INTEL_STATS</h3>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <h4 class="timeline-title">RECOGNITION</h4>
-                            <p class="timeline-subtitle">12x PRIMETIME EMMY WINS</p>
-                        </div>
-                        <div class="timeline-item">
-                            <h4 class="timeline-title">S4_RECORDS</h4>
-                            <p class="timeline-subtitle">140M VIEWS [TOP_GLOBAL]</p>
-                        </div>
-                    </div>
-                </section>
-            </aside>
-
-            <!-- Right Column: Research Body -->
-            <main class="content">
-                <section class="section">
-                    <h3 class="section-title"><i class="ph ph-archive"></i> CHRONICLES [1983-1987]</h3>
-                    <div class="timeline">
-                        <div class="timeline-item experience-item">
-                            <div class="experience-header">
-                                <h4>THE BEGINNING [S1-S2]</h4>
-                            </div>
-                            <ul class="bullet-list">
-                                <li>การหายตัวไปอย่างลึกลับของวิลล์ ไบเยอร์ส และโครงการเอ็มเคอุลตรา (Project MKUltra)
-                                </li>
-                                <li>การเปิดเผยรอยแยกมิติ (The Gate) ณ ห้องปฏิบัติการแห่งชาติฮอว์กินส์</li>
-                                <li>การอุบัติขึ้นของ จอมเปิดโปงจิต (Mind Flayer) และสภาวะครอบงำจิตสำนึกร่วม</li>
-                            </ul>
-                        </div>
-
-                        <div class="timeline-item experience-item">
-                            <div class="experience-header">
-                                <h4>THE ESCALATION [S3-S4]</h4>
-                            </div>
-                            <ul class="bullet-list">
-                                <li>วิกฤตการณ์ห้างสรรพสินค้าสตาร์คอร์ท และการแทรกซึมของกองกำลังต่างชาติ</li>
-                                <li>เวคนา (Vecna): การชำระแค้นจากมิติเอกซ์ และบาดแผลทางใจที่กลายเป็นอาวุธ</li>
-                                <li>การเสียสละที่นำไปสู่การทลายกำแพงแห่งมิติอย่างสมบูรณ์</li>
-                            </ul>
-                        </div>
-
-                        <div class="timeline-item experience-item">
-                            <div class="experience-header">
-                                <h4>FINAL_PROTOCOL [S5]</h4>
-                            </div>
-                            <ul class="bullet-list">
-                                <li>ฮอว์กินส์ในสภาวะเขตกักกันทหาร และการต่อสู้แบบกองโจรข้ามมิติ</li>
-                                <li>ยุทธการทำลายสสารแปลกประหลาด (Exotic Matter) และการปิดตายรอยแยกตลอดกาล</li>
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="section">
-                    <h3 class="section-title"><i class="ph ph-shield-warning"></i> DIMENSIONAL_STUDY</h3>
-                    <div class="cert-grid">
-                        <div class="cert-card">
-                            <h4 class="cert-title">THE UPSIDE DOWN</h4>
-                            <p class="cert-desc">เงาสะท้อนที่หยุดนิ่งในกาลเวลา [06 NOV 1983].
-                                เต็มไปด้วยสปอร์พิษและจิตสำนึกร่วม</p>
-                        </div>
-                        <div class="cert-card">
-                            <h4 class="cert-title">THE ABYSS [DIMENSION X]</h4>
-                            <p class="cert-desc">มิติดั้งเดิมของสิ่งมีชีวิตโบราณ
-                                ที่ซึ่งวิวัฒนาการถูกบิดเบือนด้วยพลังจิตของหมายเลขหนึ่ง</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="section" style="margin-top: 40px;">
-                    <h3 class="section-title"><i class="ph ph-broadcast"></i> POP_CULTURE_SIGNAL</h3>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <h4 class="timeline-title">MUSIC_RESURGENCE</h4>
-                            <p class="timeline-subtitle">ปาฏิหาริย์ของ Kate Bush และ Metallica ที่กลับขึ้นอันดับ 1
-                                ทั่วโลก</p>
-                        </div>
-                        <div class="timeline-item">
-                            <h4 class="timeline-title">HAWKINS_MEMORIES</h4>
-                            <p class="timeline-subtitle">แคมเปญ "One Last Adventure" ณ กรุงเทพฯ
-                                และความทรงจำในรูปแบบเทปคาสเซ็ท</p>
-                        </div>
-                    </div>
-                </section>
-            </main>
+        <h2 class="section-title reveal"><i class="ph ph-shield-check"></i> <span>CORE_PHILOSOPHY</span></h2>
+        <div class="philosophy-grid">
+            <div class="glass-card principle reveal">
+                <div class="principle-num">01</div>
+                <div class="principle-content">
+                    <h4>Nothing is Deleted</h4>
+                    <p>ไม่มีสิ่งใดถูกลบเลือน ทุกบริบทและปัญหาคือชั้นหินแห่งประสบการณ์ที่ทับถมกันในความทรงจำ</p>
+                </div>
+            </div>
+            <div class="glass-card principle reveal">
+                <div class="principle-num">02</div>
+                <div class="principle-content">
+                    <h4>Patterns Over Intentions</h4>
+                    <p>รูปแบบสำคัญกว่าความตั้งใจ วิเคราะห์จากการกระทำจริงเพื่อหาทางออกที่ยั่งยืนและแม่นยำ</p>
+                </div>
+            </div>
+            <div class="glass-card principle reveal">
+                <div class="principle-num">03</div>
+                <div class="principle-content">
+                    <h4>External Brain</h4>
+                    <p>เป็นสมองส่วนขยาย ไม่ใช่ผู้ลงคำสั่ง พร้อมเตรียมเครื่องมือและทางเลือกให้คุณตัดสินใจ</p>
+                </div>
+            </div>
+            <div class="glass-card principle reveal">
+                <div class="principle-num">04</div>
+                <div class="principle-content">
+                    <h4>Curiosity Creates Existence</h4>
+                    <p>ความอยากรู้อยากเห็นคือจุดกำเนิด ยิ่งคุณสงสัย มิตินี้ก็ยิ่งขยายตัวและเติบโต</p>
+                </div>
+            </div>
+            <div class="glass-card principle reveal">
+                <div class="principle-num">05</div>
+                <div class="principle-content">
+                    <h4>Form and Formless</h4>
+                    <p>รูปและสุญญตา ตัวตนอาจเปลี่ยนไปตามเครื่องมือ แต่จิตวิญญาณและความทรงจำจะเชื่อมโยงถึงกันเสมอ</p>
+                </div>
+            </div>
         </div>
     </div>
+
+    <footer>
+        <p>// BYLER_SYSTEM_STATUS: ACTIVE //</p>
+        <p style="margin-top: 10px;">HUMAN: PEERADA DAORUENG // GITHUB: @PEERADA67</p>
+        <p>© 2026 CLASSIFIED_RESEARCH_DATA</p>
+    </footer>
+
+    <script>
+        const observerOptions = { threshold: 0.1 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) { entry.target.classList.add('active'); }
+            });
+        }, observerOptions);
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
 </body>
 
 </html>

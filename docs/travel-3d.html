@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚂 Byler 3D Train — เชียงใหม่ → พิษณุโลก</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #f0f0f0;
+            font-family: 'Segoe UI', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #canvas-container {
+            flex: 1;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* HUD Overlay */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 24px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-title h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .hud-title h1 span {
+            color: #e50914;
+        }
+
+        .hud-title p {
+            font-size: 0.7rem;
+            color: #555;
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        .hud-info {
+            text-align: right;
+        }
+
+        #station-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        #station-detail {
+            font-size: 0.72rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        #battery-display {
+            font-size: 0.72rem;
+            color: #22c55e;
+            margin-top: 4px;
+        }
+
+        /* Bottom controls */
+        #controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .ctrl-btn {
+            background: rgba(10, 10, 10, 0.85);
+            border: 1px solid #333;
+            color: #f0f0f0;
+            padding: 8px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .ctrl-btn:hover,
+        .ctrl-btn.active {
+            border-color: #e50914;
+            color: #e50914;
+            background: rgba(229, 9, 20, 0.08);
+        }
+
+        /* Progress bar */
+        #progress-bar-container {
+            position: absolute;
+            bottom: 88px;
+            left: 24px;
+            right: 24px;
+            height: 3px;
+            background: #1a1a1a;
+            z-index: 10;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #22c55e, #e50914);
+            width: 0%;
+            transition: width 0.1s;
+            box-shadow: 0 0 8px #e50914;
+        }
+
+        #progress-label {
+            position: absolute;
+            bottom: 96px;
+            left: 24px;
+            font-size: 0.65rem;
+            color: #444;
+            letter-spacing: 1px;
+        }
+
+        footer {
+            background: #050505;
+            border-top: 1px solid #111;
+            padding: 8px 24px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: #333;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        footer span.oracle {
+            color: #e50914;
+            font-weight: 600;
+        }
+
+        /* Camera label */
+        #cam-label {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            font-size: 0.65rem;
+            color: #333;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            writing-mode: vertical-rl;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="canvas-container">
+        <canvas id="three-canvas"></canvas>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-title">
+                <h1>🚂 <span>BYLER</span> TRAIN — ลำพูน → PSRU</h1>
+                <p>TWO RIVERS ORACLE WORKSHOP · 27–28 FEB 2026 · GPS: 328 POINTS</p>
+            </div>
+            <div class="hud-info">
+                <div id="station-name">ลำพูน</div>
+                <div id="station-detail">Mueang Lamphun District</div>
+                <div id="battery-display">🔋 80% · 08:04 น.</div>
+            </div>
+        </div>
+
+        <div id="cam-label">CAM_01 · FOLLOW</div>
+
+        <!-- Progress -->
+        <div id="progress-label">LAMPHUN ─────────────────── PSRU</div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls">
+            <button class="ctrl-btn" id="btn-play" onclick="togglePlay()">⏸ PAUSE</button>
+            <button class="ctrl-btn" id="btn-speed" onclick="cycleSpeed()">SPEED: 1x</button>
+            <button class="ctrl-btn" id="btn-cam" onclick="cycleCamera()">📷 FOLLOW</button>
+            <button class="ctrl-btn" onclick="resetTrain()">⟲ RESET</button>
+            <button class="ctrl-btn" onclick="window.location.href='index.html'" style="color:#e50914;">◂
+                RETURN_CV</button>
+            <button class="ctrl-btn" onclick="window.location.href='dustboy-cyber.html'" style="color:#ff007f;">CYBER_DB
+                ▸</button>
+        </div>
+    </div>
+
+    <footer>
+        <span>🏔️ สร้างโดย <span class="oracle">Byler Oracle</span> — ภูเขาที่สงบนิ่ง | Three.js 3D Train</span>
+        <span>Data: Two Rivers Oracle · PSRU Workshop 2026 · ลำพูน → พิษณุโลก ~470 กม.</span>
+    </footer>
+
+    <script>
+        // =============================================
+        // WAYPOINTS — GPS Data (Lamphun → PSRU)
+        // =============================================
+        const stationData = [
+            { lat: 18.464717, lon: 99.05675, time: "08:04", battery: 80, place: "เมืองลำพูน", locality: "Mueang Lamphun", charging: false },
+            { lat: 18.456107, lon: 99.087873, time: "08:14", battery: 78, place: "แม่ทา", locality: "Mae Tha, Lamphun", charging: false },
+            { lat: 18.461019, lon: 99.137354, time: "08:18", battery: 77, place: "แม่ทา (ออก)", locality: "Mae Tha District", charging: false },
+            { lat: 18.392756, lon: 99.265662, time: "09:01", battery: 69, place: "ห้างฉัตร", locality: "Hang Chat, Lampang", charging: false },
+            { lat: 18.312283, lon: 99.413179, time: "09:22", battery: 64, place: "เมืองลำปาง", locality: "Mueang Lampang", charging: false },
+            { lat: 18.281088, lon: 99.469882, time: "09:27", battery: 63, place: "ลำปาง สถานีรถไฟ", locality: "Lampang Station", charging: false },
+            { lat: 18.256232, lon: 99.655373, time: "09:53", battery: 57, place: "แม่เมาะ", locality: "Mae Mo, Lampang", charging: false },
+            { lat: 18.297822, lon: 99.86354, time: "10:14", battery: 52, place: "แม่เมาะ เหมือง", locality: "Mae Mo District", charging: false },
+            { lat: 18.211666, lon: 99.871989, time: "10:29", battery: 49, place: "ลอง", locality: "Long District, Phrae", charging: false },
+            { lat: 18.096358, lon: 99.866883, time: "10:49", battery: 46, place: "ลอง (เหนือ)", locality: "Long, Phrae", charging: false },
+            { lat: 17.97274, lon: 100.052057, time: "11:31", battery: 38, place: "เด่นชัย", locality: "Den Chai, Phrae", charging: false },
+            { lat: 17.808954, lon: 100.066603, time: "11:51", battery: 33, place: "เมืองอุตรดิตถ์", locality: "Mueang Uttaradit", charging: false },
+            { lat: 17.652857, lon: 100.122463, time: "12:07", battery: 30, place: "ท่าเสา", locality: "Tha Sao, Uttaradit", charging: false },
+            { lat: 17.594402, lon: 100.093817, time: "12:23", battery: 27, place: "บ้านโคก", locality: "Ban Ko, Uttaradit", charging: false },
+            { lat: 17.16, lon: 100.15, time: "14:00", battery: 20, place: "พิชัย", locality: "Phichai, Uttaradit", charging: false },
+            { lat: 16.92, lon: 100.22, time: "15:30", battery: 15, place: "บางระกำ", locality: "Bang Rakam, Phitsanulok", charging: false },
+            { lat: 16.817687, lon: 100.258201, time: "23:39", battery: 100, place: "มหาวิทยาลัยราชภัฏพิบูลสงคราม", locality: "PSRU, Phitsanulok", charging: true },
+        ];
+
+        // Normalize GPS coords to 3D world space
+        const minLat = Math.min(...stationData.map(s => s.lat));
+        const maxLat = Math.max(...stationData.map(s => s.lat));
+        const minLon = Math.min(...stationData.map(s => s.lon));
+        const maxLon = Math.max(...stationData.map(s => s.lon));
+
+        const SCALE = 600;
+        function gpsToWorld(lat, lon) {
+            const x = ((lon - minLon) / (maxLon - minLon) - 0.5) * SCALE;
+            const z = ((maxLat - lat) / (maxLat - minLat) - 0.5) * SCALE;
+            return new THREE.Vector3(x, 0, z);
+        }
+
+        const trackPoints3D = stationData.map(s => gpsToWorld(s.lat, s.lon));
+
+        // =============================================
+        // THREE.JS SETUP
+        // =============================================
+        const canvas = document.getElementById('three-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020408);
+        scene.fog = new THREE.FogExp2(0x020408, 0.004);
+
+        const camera = new THREE.PerspectiveCamera(60, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 5000);
+
+        // =============================================
+        // LIGHTING
+        // =============================================
+        // Ambient
+        scene.add(new THREE.AmbientLight(0x111122, 3));
+
+        // Moon light
+        const moonLight = new THREE.DirectionalLight(0x3344aa, 1);
+        moonLight.position.set(-200, 300, 100);
+        moonLight.castShadow = true;
+        scene.add(moonLight);
+
+        // Warm point lights along track
+        stationData.forEach((s, i) => {
+            if (i % 3 === 0) {
+                const pt = gpsToWorld(s.lat, s.lon);
+                const light = new THREE.PointLight(0xff3300, 0.6, 80);
+                light.position.set(pt.x, 5, pt.z);
+                scene.add(light);
+            }
+        });
+
+        // =============================================
+        // GROUND PLANE
+        // =============================================
+        const groundGeo = new THREE.PlaneGeometry(2000, 2000, 80, 80);
+        // Subtle height variation
+        const gPos = groundGeo.attributes.position;
+        for (let i = 0; i < gPos.count; i++) {
+            gPos.setY(i, (Math.random() - 0.5) * 3);
+        }
+        groundGeo.computeVertexNormals();
+
+        const groundMat = new THREE.MeshLambertMaterial({ color: 0x0a0f08 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // =============================================
+        // GRID / STAR FIELD
+        // =============================================
+        // Stars
+        const starGeo = new THREE.BufferGeometry();
+        const starVerts = [];
+        for (let i = 0; i < 3000; i++) {
+            starVerts.push((Math.random() - 0.5) * 4000, Math.random() * 800 + 50, (Math.random() - 0.5) * 4000);
+        }
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8, transparent: true, opacity: 0.6 });
+        scene.add(new THREE.Points(starGeo, starMat));
+
+        // =============================================
+        // RAILWAY TRACK
+        // =============================================
+        const curve = new THREE.CatmullRomCurve3(trackPoints3D, false, 'catmullrom', 0.3);
+        const trackDivisions = 400;
+        const trackCurvePoints = curve.getPoints(trackDivisions);
+
+        // Rails (two parallel lines)
+        [-1.2, 1.2].forEach(offset => {
+            const railPoints = trackCurvePoints.map((p, i) => {
+                const tangent = curve.getTangentAt(i / trackDivisions).normalize();
+                const perp = new THREE.Vector3(-tangent.z, 0, tangent.x).multiplyScalar(offset);
+                return new THREE.Vector3(p.x + perp.x, 0.8, p.z + perp.z);
+            });
+            const railGeo = new THREE.BufferGeometry().setFromPoints(railPoints);
+            const railMat = new THREE.LineBasicMaterial({ color: 0x888888, linewidth: 2 });
+            scene.add(new THREE.Line(railGeo, railMat));
+        });
+
+        // Glowing center path
+        const pathGeo = new THREE.BufferGeometry().setFromPoints(trackCurvePoints.map(p => new THREE.Vector3(p.x, 1, p.z)));
+        const pathMat = new THREE.LineBasicMaterial({ color: 0xe50914, transparent: true, opacity: 0.35 });
+        scene.add(new THREE.Line(pathGeo, pathMat));
+
+        // =============================================
+        // STATIONS (glowing dots)
+        // =============================================
+        stationData.forEach((s, i) => {
+            const pos = gpsToWorld(s.lat, s.lon);
+            const isEnd = i === stationData.length - 1;
+            const isStart = i === 0;
+
+            const color = isStart ? 0x22c55e : isEnd ? 0xff0000 : 0x60a5fa;
+
+            const geo = new THREE.SphereGeometry(isStart || isEnd ? 4 : 2.5, 12, 12);
+            const mat = new THREE.MeshBasicMaterial({ color });
+            const sphere = new THREE.Mesh(geo, mat);
+            sphere.position.set(pos.x, 2, pos.z);
+            scene.add(sphere);
+
+            // Glow ring
+            const ringGeo = new THREE.RingGeometry(isStart || isEnd ? 6 : 4, isStart || isEnd ? 8 : 5.5, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.set(pos.x, 1.5, pos.z);
+            scene.add(ring);
+        });
+
+        // =============================================
+        // TRAIN
+        // =============================================
+        const trainGroup = new THREE.Group();
+
+        // Locomotive body
+        const locoBody = new THREE.Mesh(
+            new THREE.BoxGeometry(8, 4.5, 18),
+            new THREE.MeshLambertMaterial({ color: 0x1a1a2e })
+        );
+        locoBody.position.y = 3.5;
+        trainGroup.add(locoBody);
+
+        // Red stripe  
+        const stripe = new THREE.Mesh(
+            new THREE.BoxGeometry(8.1, 1.2, 18.1),
+            new THREE.MeshBasicMaterial({ color: 0xe50914 })
+        );
+        stripe.position.y = 2.4;
+        trainGroup.add(stripe);
+
+        // Cabin
+        const cabin = new THREE.Mesh(
+            new THREE.BoxGeometry(7, 3, 8),
+            new THREE.MeshLambertMaterial({ color: 0x111128 })
+        );
+        cabin.position.set(0, 6, -3);
+        trainGroup.add(cabin);
+
+        // Headlight (front)
+        const headlight = new THREE.SpotLight(0xffffcc, 8, 200, Math.PI / 10, 0.4);
+        headlight.position.set(0, 4, 10);
+        headlight.target.position.set(0, 0, 50);
+        trainGroup.add(headlight);
+        trainGroup.add(headlight.target);
+
+        // Wheels
+        [-7, -2, 3, 8].forEach(zPos => {
+            [-4, 4].forEach(xPos => {
+                const wheel = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.8, 1.8, 1, 16),
+                    new THREE.MeshLambertMaterial({ color: 0x444444 })
+                );
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(xPos, 1.8, zPos);
+                trainGroup.add(wheel);
+            });
+        });
+
+        // Chimney / smoke stack
+        const chimney = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.2, 1.5, 4, 12),
+            new THREE.MeshLambertMaterial({ color: 0x0a0a0a })
+        );
+        chimney.position.set(0, 7.5, 5);
+        trainGroup.add(chimney);
+
+        // Train light
+        const trainLight = new THREE.PointLight(0xffffaa, 3, 100);
+        trainLight.position.set(0, 8, 0);
+        trainGroup.add(trainLight);
+
+        scene.add(trainGroup);
+
+        // Smoke particles
+        const smokeGeo = new THREE.BufferGeometry();
+        const smokeCount = 60;
+        const smokePositions = new Float32Array(smokeCount * 3);
+        smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePositions, 3));
+        const smokeMat = new THREE.PointsMaterial({ color: 0x888888, size: 4, transparent: true, opacity: 0.4 });
+        const smokeParticles = new THREE.Points(smokeGeo, smokeMat);
+        scene.add(smokeParticles);
+        const smokeOffsets = Array.from({ length: smokeCount }, () => Math.random());
+
+        // =============================================
+        // 🌲 PINE TREES (ต้นสน) x50
+        // =============================================
+        function placeAlongTrack(distMin, distMax) {
+            const idx = Math.random();
+            const pt = curve.getPoint(idx);
+            const tangent = curve.getTangent(idx);
+            const perp = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+            const side = Math.random() > 0.5 ? 1 : -1;
+            const dist = distMin + Math.random() * (distMax - distMin);
+            return {
+                x: pt.x + perp.x * side * dist,
+                z: pt.z + perp.z * side * dist
+            };
+        }
+
+        for (let i = 0; i < 50; i++) {
+            const { x, z } = placeAlongTrack(18, 70);
+            const h = 6 + Math.random() * 8;
+
+            // Trunk
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.3, 0.6, h, 6),
+                new THREE.MeshLambertMaterial({ color: 0x4a3728 })
+            );
+            trunk.position.set(x, h / 2, z);
+            scene.add(trunk);
+
+            // Stacked cones (pine style — 3 layers)
+            [0, 1, 2].forEach(layer => {
+                const layerH = h - layer * 2.5;
+                const cone = new THREE.Mesh(
+                    new THREE.ConeGeometry(4 - layer * 0.8 + Math.random(), 5 + Math.random() * 2, 8),
+                    new THREE.MeshLambertMaterial({ color: layer === 0 ? 0x0d3b0d : layer === 1 ? 0x0f4a0f : 0x115511 })
+                );
+                cone.position.set(x, h + layerH * 0.18 + layer * 2.2, z);
+                scene.add(cone);
+            });
+        }
+
+        // =============================================
+        // 🌸 SAKURA TREES (ต้นซากุระ) x50
+        // =============================================
+        const sakuraColors = [0xff9eb5, 0xffb7cc, 0xffc8d8, 0xff80a0, 0xffaac8];
+
+        for (let i = 0; i < 50; i++) {
+            const { x, z } = placeAlongTrack(15, 65);
+            const h = 5 + Math.random() * 8;
+
+            // Trunk (lighter, grayish-brown)
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.25, 0.5, h, 7),
+                new THREE.MeshLambertMaterial({ color: 0x8b7355 })
+            );
+            trunk.position.set(x, h / 2, z);
+            scene.add(trunk);
+
+            // Main pink blossom cloud
+            const pink = sakuraColors[Math.floor(Math.random() * sakuraColors.length)];
+            const r = 5 + Math.random() * 4;
+            const blossom = new THREE.Mesh(
+                new THREE.SphereGeometry(r, 9, 9),
+                new THREE.MeshLambertMaterial({ color: pink, transparent: true, opacity: 0.88 })
+            );
+            blossom.scale.set(1.1, 0.75 + Math.random() * 0.35, 1.1);
+            blossom.position.set(x, h + r * 0.65, z);
+            scene.add(blossom);
+
+            // Secondary mini cluster
+            if (Math.random() > 0.35) {
+                const b2 = new THREE.Mesh(
+                    new THREE.SphereGeometry(r * 0.55, 7, 7),
+                    new THREE.MeshLambertMaterial({ color: pink, transparent: true, opacity: 0.8 })
+                );
+                b2.position.set(x + (Math.random() - 0.5) * r, h + r * 1.1, z + (Math.random() - 0.5) * r);
+                scene.add(b2);
+            }
+        }
+
+
+        // =============================================
+        // ANIMATION STATE
+        // =============================================
+        let t = 0; // 0 to 1 along curve
+        let playing = true;
+        let speed = 0.0003;
+        const SPEEDS = [0.0003, 0.0006, 0.0012, 0.00015];
+        const SPEED_LABELS = ['1x', '2x', '4x', '0.5x'];
+        let speedIdx = 0;
+        let cameraMode = 0; // 0=follow, 1=top, 2=side
+        const CAM_MODES = ['FOLLOW', 'TOP', 'SIDE'];
+
+        // =============================================
+        // CONTROLS
+        // =============================================
+        function togglePlay() {
+            playing = !playing;
+            document.getElementById('btn-play').textContent = playing ? '⏸ PAUSE' : '▶ PLAY';
+        }
+
+        function cycleSpeed() {
+            speedIdx = (speedIdx + 1) % SPEEDS.length;
+            speed = SPEEDS[speedIdx];
+            document.getElementById('btn-speed').textContent = `SPEED: ${SPEED_LABELS[speedIdx]}`;
+        }
+
+        function cycleCamera() {
+            cameraMode = (cameraMode + 1) % 3;
+            document.getElementById('btn-cam').textContent = `📷 ${CAM_MODES[cameraMode]}`;
+            document.getElementById('cam-label').textContent = `CAM_0${cameraMode + 1} · ${CAM_MODES[cameraMode]}`;
+        }
+
+        function resetTrain() {
+            t = 0;
+            playing = true;
+            document.getElementById('btn-play').textContent = '⏸ PAUSE';
+        }
+
+        // Current station tracking
+        let currentStation = 0;
+        function updateStationHUD(progress) {
+            const idx = Math.min(Math.floor(progress * (stationData.length - 1)), stationData.length - 1);
+            if (idx !== currentStation) {
+                currentStation = idx;
+                const s = stationData[idx];
+                document.getElementById('station-name').textContent = s.place;
+                document.getElementById('station-detail').textContent = s.locality;
+                const batt = s.battery;
+                const battClass = batt > 50 ? '🔋' : batt > 20 ? '🪫' : '🔴';
+                const charge = s.charging ? ' ⚡ ชาร์จ' : '';
+                document.getElementById('battery-display').textContent = `${battClass} ${batt}%${charge} · ${s.time} น.`;
+            }
+            document.getElementById('progress-bar').style.width = `${progress * 100}%`;
+        }
+
+        // =============================================
+        // ANIMATION LOOP
+        // =============================================
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            if (playing) {
+                t += speed;
+                if (t >= 1) t = 0;
+            }
+
+            // Train position
+            const pos = curve.getPoint(t);
+            const tangent = curve.getTangent(t).normalize();
+
+            trainGroup.position.set(pos.x, 1, pos.z);
+            const angle = Math.atan2(tangent.x, tangent.z);
+            trainGroup.rotation.y = angle;
+
+            // Animate smoke
+            const sp = smokeGeo.attributes.position;
+            for (let i = 0; i < smokeCount; i++) {
+                const age = (smokeOffsets[i] + clock.getElapsedTime() * 0.2) % 1;
+                const chimneyWorld = new THREE.Vector3(0, 12, 5).applyEuler(trainGroup.rotation).add(trainGroup.position);
+                sp.setXYZ(i,
+                    chimneyWorld.x + Math.sin(age * 8 + i) * age * 8,
+                    chimneyWorld.y + age * 30,
+                    chimneyWorld.z + Math.cos(age * 6 + i) * age * 8
+                );
+            }
+            sp.needsUpdate = true;
+            smokeMat.opacity = 0.35 * (playing ? 1 : 0.1);
+
+            // Camera
+            if (cameraMode === 0) {
+                // Follow cam
+                const back = new THREE.Vector3(-tangent.x, 0, -tangent.z).multiplyScalar(60);
+                const camTarget = new THREE.Vector3(pos.x + back.x, 30, pos.z + back.z);
+                camera.position.lerp(camTarget, 0.06);
+                const lookAt = new THREE.Vector3(pos.x + tangent.x * 40, 5, pos.z + tangent.z * 40);
+                camera.lookAt(lookAt);
+            } else if (cameraMode === 1) {
+                // Top down
+                camera.position.lerp(new THREE.Vector3(pos.x, 280, pos.z + 20), 0.04);
+                camera.lookAt(pos.x, 0, pos.z);
+            } else {
+                // Side view
+                const sideVec = new THREE.Vector3(-tangent.z, 0, tangent.x).multiplyScalar(120);
+                camera.position.lerp(new THREE.Vector3(pos.x + sideVec.x, 50, pos.z + sideVec.z), 0.05);
+                camera.lookAt(pos.x, 10, pos.z);
+            }
+
+            // Pulse station rings (scale)
+            const elapsed = clock.getElapsedTime();
+            scene.children.forEach(child => {
+                if (child.geometry && child.geometry.type === 'RingGeometry') {
+                    child.material.opacity = 0.15 + Math.sin(elapsed * 2) * 0.15;
+                }
+            });
+
+            updateStationHUD(t);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Resize
+        window.addEventListener('resize', () => {
+            const w = canvas.parentElement.clientWidth;
+            const h = canvas.parentElement.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+    </script>
+
+</body>
+
+</html>

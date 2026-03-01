@@ -1,0 +1,307 @@
+:root {
+    --text-black: #000000;
+    --text-dark: #1a1a1a;
+    --text-gray: #4a4a4a;
+    --line-color: #000000;
+    /* Strict black lines as per image */
+    --accent-green: #2e7d32;
+    /* A dark vibrant green for subtle highlights if needed, though mostly monochrome */
+    --bg-white: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #e0e0e0;
+    font-family: 'Prompt', sans-serif;
+    color: var(--text-black);
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+/* A4 Page layout */
+.a4-page {
+    width: 210mm;
+    min-height: 297mm;
+    background-color: var(--bg-white);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    padding: 25mm 20mm;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.cv-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: baseline;
+    margin-bottom: 25px;
+}
+
+.main-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.job-title {
+    font-size: 24px;
+    font-weight: 500;
+    text-align: right;
+    color: var(--text-dark);
+}
+
+/* Main Grid */
+.cv-grid {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Divider Line */
+.divider {
+    border-top: 1px solid var(--line-color);
+    margin: 20px 0;
+    width: 100%;
+}
+
+/* Row Layout */
+.grid-left {
+    float: left;
+    width: 20%;
+    padding-right: 15px;
+}
+
+.grid-right {
+    float: left;
+    width: 80%;
+    padding-left: 10px;
+}
+
+/* Clearfix for rows */
+.grid-left::after,
+.grid-right::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Typical Section Headings */
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+/* Contact & About Row */
+.contact-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+.contact-col {
+    width: 48%;
+}
+
+.contact-info p {
+    margin-bottom: 4px;
+}
+
+.about-text {
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: justify;
+    color: var(--text-dark);
+}
+
+/* Experience Row */
+.experience-block {
+    margin-bottom: 18px;
+}
+
+.company-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.job-entry {
+    display: flex;
+}
+
+.job-year {
+    width: 12%;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.job-details {
+    width: 88%;
+}
+
+.role-name {
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.job-details ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.job-details ul li {
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 4px;
+    color: var(--text-dark);
+}
+
+/* Education Row */
+.edu-block {
+    margin-bottom: 15px;
+}
+
+.school-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.edu-degree {
+    font-size: 13.5px;
+    margin-bottom: 2px;
+}
+
+.edu-block ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.edu-block ul li {
+    font-size: 13px;
+}
+
+/* Certificates Row */
+.cert-grid {
+    display: flex;
+    justify-content: space-between;
+}
+
+.cert-col {
+    width: 48%;
+}
+
+.cert-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.cert-desc {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+/* Skills Row */
+.skill-group {
+    margin-bottom: 5px;
+}
+
+.skill-heading {
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.skill-group ul {
+    list-style-type: disc;
+    padding-left: 40px;
+}
+
+.skill-group ul li {
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 2px;
+    color: var(--text-dark);
+}
+
+/* Print UI */
+.print-tools {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-print {
+    background-color: var(--accent-green);
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    font-family: inherit;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s;
+}
+
+.btn-print:hover {
+    background-color: #1b5e20;
+}
+
+.btn-back {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-weight: 600;
+    border-radius: 4px;
+    text-decoration: none;
+    text-align: center;
+    font-size: 14px;
+}
+
+@media print {
+    body {
+        background-color: #fff;
+        padding: 0;
+    }
+
+    .a4-page {
+        box-shadow: none;
+        width: 100%;
+        min-height: auto;
+        padding: 15mm;
+    }
+
+    .print-tools {
+        display: none !important;
+    }
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+}

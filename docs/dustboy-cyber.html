@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DustBoy // Cyber Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #090014;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        #ui-layer {
+            position: absolute;
+            z-index: 10;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .title {
+            font-size: 2rem;
+            color: #ff007f;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 0 20px #ff007f;
+            letter-spacing: 5px;
+        }
+
+        .subtitle {
+            color: #00e5ff;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+
+        .nav {
+            pointer-events: auto;
+        }
+
+        .nav a {
+            display: inline-block;
+            padding: 8px 16px;
+            margin-left: 10px;
+            background: rgba(255, 0, 127, 0.1);
+            border: 1px solid #ff007f;
+            color: #ff007f;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            text-shadow: 0 0 5px #ff007f;
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.3);
+        }
+
+        .nav a:hover {
+            background: #ff007f;
+            color: #000;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            pointer-events: auto;
+            padding-right: 10px;
+        }
+
+        .data-grid::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .data-grid::-webkit-scrollbar-thumb {
+            background: #ff007f;
+        }
+
+        .neon-card {
+            background: rgba(10, 0, 20, 0.8);
+            border: 1px solid #00e5ff;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2) inset, 0 0 10px rgba(0, 229, 255, 0.3);
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .neon-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #ff007f;
+            box-shadow: 0 0 10px #ff007f;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+
+        .val-pm25 {
+            color: #ff007f;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff007f;
+        }
+
+        .val-id {
+            color: #00e5ff;
+            font-weight: bold;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="bg-canvas"></div>
+
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div>
+                <div class="title">NEON SECTOR</div>
+                <div class="subtitle" id="status-text">CONNECTING NEURAL LINK...</div>
+            </div>
+            <div class="nav">
+                <a href="index.html">SYS_HOME</a>
+            </div>
+        </div>
+
+        <div class="data-grid" id="data-grid"></div>
+    </div>
+
+    <script>
+        // --- THREE.JS CYBER SCENE ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x090014, 0.003);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.set(0, 50, 200);
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('bg-canvas').appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0;
+
+        // Cyber Grid Floor
+        const gridHelper = new THREE.GridHelper(800, 40, 0xff007f, 0x00e5ff);
+        gridHelper.position.y = -30;
+        scene.add(gridHelper);
+
+        // Floating geometric shapes
+        const group = new THREE.Group();
+        scene.add(group);
+
+        const mat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0.3 });
+        for (let i = 0; i < 30; i++) {
+            const size = Math.random() * 20 + 5;
+            const geo = new THREE.IcosahedronGeometry(size, 0);
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set((Math.random() - 0.5) * 400, Math.random() * 150 - 10, (Math.random() - 0.5) * 400);
+            mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+
+            // Randomly some are pink
+            if (Math.random() > 0.7) {
+                mesh.material = new THREE.MeshBasicMaterial({ color: 0xff007f, wireframe: true, transparent: true, opacity: 0.5 });
+            }
+            group.add(mesh);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            group.children.forEach((c, i) => {
+                c.rotation.x += 0.005;
+                c.rotation.y += 0.01;
+                c.position.y += Math.sin(Date.now() * 0.001 + i) * 0.1;
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- MQTT LOGIC ---
+        const broker = 'wss://dustboy-wss-bridge.laris.workers.dev/mqtt';
+        const client = mqtt.connect(broker, { clientId: 'cyber_' + Math.random().toString(16).substr(2, 8), keepalive: 60 });
+        const grid = document.getElementById('data-grid');
+        const statusTxt = document.getElementById('status-text');
+
+        client.on('connect', () => {
+            statusTxt.textContent = 'NEURAL LINK ACTIVE // RECEIVING TELEMETRY';
+            client.subscribe('DUSTBOY/+/+/+/status');
+        });
+
+        client.on('message', (topic, message) => {
+            try {
+                const data = JSON.parse(message.toString());
+                const id = topic.split('/')[4] || 'UNKNOWN';
+
+                const card = document.createElement('div');
+                card.className = 'neon-card';
+                card.innerHTML = `
+                    <div class="card-row">
+                        <span>NODE_ID</span>
+                        <span class="val-id">${id}</span>
+                    </div>
+                    ${data.pm25 !== undefined ? `
+                    <div class="card-row" style="margin: 10px 0; align-items:center;">
+                        <span>PM 2.5</span>
+                        <span class="val-pm25">${data.pm25} <span style="font-size:0.6rem; color:#ccc;">µg/m³</span></span>
+                    </div>` : ''}
+                    ${data.pm10 !== undefined ? `
+                    <div class="card-row">
+                        <span>PM 10</span>
+                        <span style="color:#ffaa00; font-weight:bold;">${data.pm10} µg/m³</span>
+                    </div>` : ''}
+                    ${data.temp !== undefined ? `
+                    <div class="card-row">
+                        <span>TMP/RH</span>
+                        <span style="color:#22c55e;">${data.temp}°C / ${data.humi || 0}%</span>
+                    </div>` : ''}
+                    <div class="card-row">
+                        <span>SYS_UPTIME</span>
+                        <span style="color:#00e5ff">${data.up || 0}s</span>
+                    </div>
+                `;
+
+                grid.prepend(card);
+                if (grid.children.length > 12) grid.removeChild(grid.lastChild);
+
+                // Flash grid color on receive
+                gridHelper.material.opacity = 0.8;
+                setTimeout(() => { gridHelper.material.opacity = 1; }, 200);
+
+            } catch (e) { }
+        });
+    </script>
+</body>
+
+</html>

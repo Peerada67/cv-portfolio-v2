@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloodBoy // 3D Smart Contract Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #050914;
+            font-family: 'Exo 2', sans-serif;
+            color: #e2e8f0;
+            overflow: hidden;
+            /* Hide scrollbars, 3D is full screen */
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* HUD - Heads Up Display Overlay */
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Let clicks pass through to 3D canvas */
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .hud-interactive {
+            pointer-events: auto;
+            /* Enable clicks on specific HUD elements */
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* Top Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: auto;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .title-box {
+            padding: 15px 25px;
+            border-left: 4px solid #38bdf8;
+        }
+
+        .title-box h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+        }
+
+        .title-box .subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            transition: 0.3s;
+            width: fit-content;
+        }
+
+        .nav-link:hover {
+            background: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Control Panel (Top Right) */
+        .control-panel {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 300px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select.cyber-select {
+            background: rgba(0, 0, 0, 0.5);
+            color: #38bdf8;
+            border: 1px solid #38bdf8;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .meta-line {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+
+        .meta-line a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        /* Bottom Section: Chart and Table */
+        .bottom-panels {
+            display: flex;
+            gap: 20px;
+            height: 35vh;
+            /* 35% of screen height */
+            pointer-events: auto;
+        }
+
+        .data-panel {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chart-panel {
+            flex: 2;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 8px;
+            color: #64748b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 400;
+        }
+
+        .data-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #e2e8f0;
+        }
+
+        .data-table .val-current {
+            color: #38bdf8;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* Chart Controls */
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .toggle-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #475569;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .toggle-btn.active-water {
+            background: rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            border-color: #38bdf8;
+        }
+
+        .toggle-btn.active-battery {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            position: relative;
+            min-height: 0;
+        }
+
+        /* Loader */
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 9, 20, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .cyber-loader {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-top: 3px solid #38bdf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+
+        #loading-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: #38bdf8;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 3D Value HUD */
+        #floating-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(150px, -50px);
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(10, 15, 30, 0.8);
+            border: 1px solid #38bdf8;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            pointer-events: none;
+            display: none;
+        }
+
+        #floating-value .val {
+            font-size: 1.5rem;
+            color: #38bdf8;
+            font-weight: 700;
+        }
+
+        #floating-value .lbl {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <div id="floating-value">
+        <div class="lbl">Current Depth</div>
+        <div class="val" id="hud-depth-val">0.0000 m</div>
+    </div>
+
+    <!-- UI Overlay -->
+    <div class="hud">
+
+        <!-- Initial Loader -->
+        <div id="loading-overlay">
+            <div class="cyber-loader"></div>
+            <span id="loading-text">Initializing JIBCHAIN L1...</span>
+        </div>
+
+        <!-- Top Section -->
+        <div class="header">
+            <div class="header-left">
+                <a href="index.html" class="nav-link hud-interactive"><i class="ph ph-arrow-left"></i> SYSTEM_RTRN</a>
+                <div class="title-box glass-panel hud-interactive">
+                    <h1 id="ui-nickname">FloodBoy // Syncing</h1>
+                    <div class="subtitle" id="ui-desc">Establishing Web3 Connection...</div>
+                </div>
+            </div>
+
+            <div class="control-panel glass-panel hud-interactive">
+                <div class="control-group">
+                    <label>Target Sensor Node</label>
+                    <select id="store-select" class="cyber-select">
+                        <option value="0x0994Bc66b2863f8D58C8185b1ed6147895632812">FloodBoy016 (NODE_016)</option>
+                        <option value="0xCd3Ec17ddFDa24f8F97131fa0FDf20e7cbd1A8Bb">FloodBoy001 (NODE_001)</option>
+                    </select>
+                </div>
+
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 5px 0;"></div>
+
+                <div class="meta-line">
+                    <span><span class="status-dot"></span> <span id="ui-block">Block: ...</span></span>
+                    <span id="ui-timestamp">UPDATED: --:--:--</span>
+                </div>
+                <div class="meta-line">
+                    <span>ADDR: <a href="#" id="ui-store-link" target="_blank">0x...</a></span>
+                    <span>OWNER: <a href="#" id="ui-owner-link" target="_blank">0x...</a></span>
+                </div>
+                <div class="meta-line">
+                    <span>SENSORS: <span id="ui-sensors">-</span> ALIVE</span>
+                    <span id="ui-no-data" style="color:#ef4444; display:none;">NO ARCHIVAL DATA</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="bottom-panels">
+            <!-- Data Table -->
+            <div class="data-panel glass-panel hud-interactive">
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase;">
+                    <i class="ph ph-cpu"></i> Sensor Telemetry (24H)
+                </div>
+                <div style="overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-panel glass-panel hud-interactive">
+                <div class="chart-header">
+                    <div style="font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">
+                        <i class="ph ph-chart-line-up"></i> Historical Analysis
+                    </div>
+                    <div class="toggle-group">
+                        <button id="btn-water" class="toggle-btn active-water" onclick="switchChart('waterDepth')">🌊
+                            Water Depth</button>
+                        <button id="btn-battery" class="toggle-btn" onclick="switchChart('batteryVoltage')">⚡ Battery
+                            Volts</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Main Logic: Web3 (Viem) + 3D (Three.js) + Chart.js -->
+    <script type="module">
+        import { createPublicClient, http, parseAbiItem } from 'https://esm.sh/viem@2.8.14';
+
+        // ==========================================
+        // 1. THREE.JS 3D SCENE SETUP
+        // ==========================================
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2('#050914', 0.02);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(30, 20, 40);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.1; // Don't go too far underground
+        controls.minDistance = 20;
+        controls.maxDistance = 100;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0x38bdf8, 2);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        // Core 3D Objects: The Water Tank
+        const TANK_RADIUS = 8;
+        const TANK_HEIGHT = 20; // Represents roughly 0 to 4 meters max height physically
+
+        // Base Platform
+        const baseGeo = new THREE.CylinderGeometry(TANK_RADIUS + 2, TANK_RADIUS + 3, 2, 64);
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.2 });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.y = -1;
+        scene.add(base);
+
+        // Battery Ring (Glows based on voltage)
+        const ringGeo = new THREE.TorusGeometry(TANK_RADIUS + 1.5, 0.3, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+        const batteryRing = new THREE.Mesh(ringGeo, ringMat);
+        batteryRing.position.y = 0.5;
+        batteryRing.rotation.x = Math.PI / 2;
+        scene.add(batteryRing);
+
+        // Glass Cylinder (Outer Tank)
+        const glassGeo = new THREE.CylinderGeometry(TANK_RADIUS, TANK_RADIUS, TANK_HEIGHT, 64);
+        // Shift origin to bottom
+        glassGeo.translate(0, TANK_HEIGHT / 2, 0);
+        const glassMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 0.1,
+            roughness: 0.1,
+            transmission: 0.9, // glass-like
+            transparent: true,
+            opacity: 1
+        });
+        const glassTank = new THREE.Mesh(glassGeo, glassMat);
+        scene.add(glassTank);
+
+        // Grid inside tank (measuring lines)
+        const gridGeom = new THREE.CylinderGeometry(TANK_RADIUS + 0.1, TANK_RADIUS + 0.1, TANK_HEIGHT, 16, 10, true);
+        gridGeom.translate(0, TANK_HEIGHT / 2, 0);
+        const gridMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.1 });
+        const tankGrid = new THREE.Mesh(gridGeom, gridMat);
+        scene.add(tankGrid);
+
+        // The Water Body
+        const waterGeo = new THREE.CylinderGeometry(TANK_RADIUS - 0.2, TANK_RADIUS - 0.2, TANK_HEIGHT, 64);
+        waterGeo.translate(0, TANK_HEIGHT / 2, 0);
+        const waterMat = new THREE.MeshPhysicalMaterial({
+            color: 0x0284c7, // Deep blue
+            emissive: 0x0284c7,
+            emissiveIntensity: 0.2,
+            transmission: 0.8,
+            transparent: true,
+            opacity: 0.8,
+            roughness: 0.1
+        });
+        const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+        waterMesh.scale.y = 0.01; // Start empty
+        scene.add(waterMesh);
+
+        // Internal Water Light
+        const waterLight = new THREE.PointLight(0x38bdf8, 2, 50);
+        waterLight.position.set(0, 5, 0);
+        scene.add(waterLight);
+
+        // Floating Particles (Cyberpunk Dust)
+        const particleGeo = new THREE.BufferGeometry();
+        const ptCount = 300;
+        const posArray = new Float32Array(ptCount * 3);
+        const randomY = [];
+        for (let i = 0; i < ptCount * 3; i += 3) {
+            posArray[i] = (Math.random() - 0.5) * 60; // x
+            posArray[i + 1] = Math.random() * 40;     // y
+            posArray[i + 2] = (Math.random() - 0.5) * 60; // z
+            randomY.push(posArray[i + 1]);
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particleMat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.2, transparent: true, opacity: 0.6 });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        // Animation Target Variables for smooth transitions
+        let targetWaterScaleY = 0.01;
+
+        const floatingHUD = document.getElementById('floating-value');
+        const floatingVal = document.getElementById('hud-depth-val');
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            controls.update();
+
+            // Smoothly interpolate water height
+            waterMesh.scale.y += (targetWaterScaleY - waterMesh.scale.y) * 0.05;
+            waterLight.position.y = (waterMesh.scale.y * TANK_HEIGHT) / 2; // Light moves with water
+
+            // Make water pulse slightly
+            waterMat.emissiveIntensity = 0.2 + Math.sin(time * 2) * 0.1;
+
+            // Animate Particles
+            const pPositions = particles.geometry.attributes.position.array;
+            for (let i = 0; i < ptCount; i++) {
+                pPositions[i * 3 + 1] -= 0.05; // Fall down
+                if (pPositions[i * 3 + 1] < 0) {
+                    pPositions[i * 3 + 1] = 40; // Reset to top
+                }
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+
+            // Make tank rotate slowly
+            glassTank.rotation.y = time * 0.05;
+            tankGrid.rotation.y = time * 0.05;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+
+        // ==========================================
+        // 2. VIEM.JS SMART CONTRACT LOGIC
+        // ==========================================
+        const jibchain = {
+            id: 8899,
+            name: 'JIBCHAIN L1',
+            network: 'jibchain',
+            nativeCurrency: { name: 'JBC', symbol: 'JBC', decimals: 18 },
+            rpcUrls: { default: { http: ['https://rpc-l1.jibchain.net'] } },
+            blockExplorers: { default: { name: 'Jibchain Explorer', url: 'https://exp.jibchain.net' } }
+        };
+
+        const client = createPublicClient({ chain: jibchain, transport: http() });
+
+        const FACTORY_ADDRESS = '0x63bB41b79b5aAc6e98C7b35Dcb0fE941b85Ba5Bb';
+        const UNIVERSAL_SIGNER = '0xcB0e58b011924e049ce4b4D62298Edf43dFF0BDd';
+
+        const FactoryABI = [{
+            "name": "getStoreInfo",
+            "inputs": [{ "name": "store", "type": "address" }],
+            "outputs": [
+                { "name": "nickname", "type": "string" },
+                { "name": "owner", "type": "address" },
+                { "name": "authorizedSensorCount", "type": "uint256" },
+                { "name": "deployedBlock", "type": "uint128" },
+                { "name": "description", "type": "string" }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        }];
+
+        const StoreABI = [
+            {
+                "name": "getAllFields",
+                "outputs": [{
+                    "components": [
+                        { "name": "name", "type": "string" },
+                        { "name": "unit", "type": "string" },
+                        { "name": "dtype", "type": "string" }
+                    ],
+                    "type": "tuple[]"
+                }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "name": "getLatestRecord",
+                "inputs": [{ "name": "sensor", "type": "address" }],
+                "outputs": [
+                    { "name": "", "type": "uint256" },
+                    { "name": "", "type": "int256[]" }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            parseAbiItem('event RecordStored(address indexed sensor, uint256 timestamp, int256[] values)')
+        ];
+
+        // UI State
+        let currentChartInstance = null;
+        let chartDataSets = { waterDepth: [], batteryVoltage: [], timestamps: [] };
+        let currentDatasetType = 'waterDepth';
+
+        // DOM
+        const elOverlay = document.getElementById('loading-overlay');
+        const elLoadingText = document.getElementById('loading-text');
+        const elTableBody = document.getElementById('table-body');
+
+        // Utils
+        function formatAddress(addr) { return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`; }
+
+        function formatFieldName(fieldName) {
+            return fieldName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+        }
+
+        function processValueRaw(value, unit) {
+            let num = Number(value);
+            if (unit.includes('x10000')) return num / 10000;
+            if (unit.includes('x1000')) return num / 1000;
+            if (unit.includes('x100')) return num / 100;
+            return num;
+        }
+
+        function processValueStr(value, unit) {
+            const baseUnit = unit.replace(/ x\d+/, '');
+            const num = Number(value);
+            if (unit.includes('x10000')) return (num / 10000).toFixed(4) + ' ' + baseUnit;
+            if (unit.includes('x1000')) return (num / 1000).toFixed(3) + ' ' + baseUnit;
+            if (unit.includes('x100')) return (num / 100).toFixed(3) + ' ' + baseUnit;
+            return num + ' ' + unit;
+        }
+
+        // Main Fetch Logic
+        async function loadStoreData(storeAddress) {
+            try {
+                elOverlay.style.display = 'flex';
+                elLoadingText.textContent = "SYNCHRONIZING WITH JIBCHAIN L1...";
+                document.getElementById('ui-no-data').style.display = 'none';
+                floatingHUD.style.display = 'none';
+                targetWaterScaleY = 0.01; // reset water visual
+
+                const currentBlockNumber = await client.getBlockNumber();
+                document.getElementById('ui-block').textContent = `Block: ${currentBlockNumber}`;
+
+                // 1. Info
+                const storeInfo = await client.readContract({
+                    address: FACTORY_ADDRESS, abi: FactoryABI, functionName: 'getStoreInfo', args: [storeAddress]
+                });
+                document.getElementById('ui-nickname').textContent = storeInfo[0] || "UNKNOWN NODE";
+                document.getElementById('ui-desc').textContent = storeInfo[4] || "No Description";
+                document.getElementById('ui-store-link').textContent = formatAddress(storeAddress);
+                document.getElementById('ui-store-link').href = `https://exp.jibchain.net/address/${storeAddress}`;
+                document.getElementById('ui-owner-link').textContent = formatAddress(storeInfo[1]);
+                document.getElementById('ui-owner-link').href = `https://exp.jibchain.net/address/${storeInfo[1]}`;
+                document.getElementById('ui-sensors').textContent = storeInfo[2];
+
+                // 2. Fields
+                const fields = await client.readContract({
+                    address: storeAddress, abi: StoreABI, functionName: 'getAllFields'
+                });
+
+                // 3. Latest
+                let latestTimestamp = 0; let latestValues = [];
+                try {
+                    const latest = await client.readContract({
+                        address: storeAddress, abi: StoreABI, functionName: 'getLatestRecord', args: [UNIVERSAL_SIGNER]
+                    });
+                    latestTimestamp = Number(latest[0]);
+                    latestValues = latest[1];
+                } catch (e) { console.warn("No latest record"); }
+
+                if (latestTimestamp > 0) {
+                    const dt = new Date(latestTimestamp * 1000);
+                    document.getElementById('ui-timestamp').textContent = `UPDATED: ${dt.toLocaleTimeString('en-US')}`;
+                }
+
+                // 4. Historical
+                elLoadingText.textContent = "DECRYPTING BLOCKCHAIN TELEMETRY...";
+                let logs = [];
+                try {
+                    logs = await client.getLogs({
+                        address: storeAddress, event: StoreABI[2], args: { sensor: UNIVERSAL_SIGNER },
+                        fromBlock: currentBlockNumber - 20000n, toBlock: 'latest'
+                    });
+                } catch (e) {
+                    try {
+                        logs = await client.getLogs({
+                            address: storeAddress, event: StoreABI[2], args: { sensor: UNIVERSAL_SIGNER },
+                            fromBlock: currentBlockNumber - 5000n, toBlock: 'latest'
+                        });
+                    } catch (fallbackErr) { }
+                }
+
+                if (logs.length === 0) document.getElementById('ui-no-data').style.display = 'inline-block';
+
+                const waterDepthIndex = fields.findIndex(f => f.name.toLowerCase().includes('water_depth') && !f.name.includes('min') && !f.name.includes('max'));
+                const batteryIndex = fields.findIndex(f => f.name.toLowerCase().includes('battery_voltage') && !f.name.includes('min') && !f.name.includes('max'));
+
+                const wUnit = waterDepthIndex >= 0 ? fields[waterDepthIndex].unit : '';
+                const bUnit = batteryIndex >= 0 ? fields[batteryIndex].unit : '';
+
+                let statStore = {};
+                fields.forEach((f, i) => { statStore[i] = { min: Infinity, max: -Infinity, count: 0 }; });
+                chartDataSets = { waterDepth: [], batteryVoltage: [], timestamps: [] };
+
+                logs.sort((a, b) => Number(a.args.timestamp) - Number(b.args.timestamp));
+
+                const INTERVAL_MS = 15 * 60 * 1000;
+                let lastGroupTime = 0;
+
+                logs.forEach((log) => {
+                    const ts = Number(log.args.timestamp) * 1000;
+                    const vals = log.args.values;
+
+                    let isNewGroup = false;
+                    if (ts - lastGroupTime > INTERVAL_MS) {
+                        isNewGroup = true;
+                        chartDataSets.timestamps.push(ts);
+                        lastGroupTime = ts;
+                    }
+
+                    vals.forEach((v, i) => {
+                        const num = processValueRaw(v.toString(), fields[i].unit);
+                        if (num < statStore[i].min) statStore[i].min = num;
+                        if (num > statStore[i].max) statStore[i].max = num;
+                        statStore[i].count++;
+                    });
+
+                    if (isNewGroup) {
+                        if (waterDepthIndex >= 0) chartDataSets.waterDepth.push(processValueRaw(vals[waterDepthIndex].toString(), wUnit));
+                        if (batteryIndex >= 0) chartDataSets.batteryVoltage.push(processValueRaw(vals[batteryIndex].toString(), bUnit));
+                    }
+                });
+
+                // Update UI Table
+                elTableBody.innerHTML = '';
+                let latestWaterRawNum = 0;
+                let latestBatteryVolts = 0;
+
+                fields.forEach((field, i) => {
+                    if (field.name.includes('count') || field.name.includes('min') || field.name.includes('max')) return;
+
+                    const unit = field.unit;
+                    let currentRaw = latestValues[i] ? latestValues[i].toString() : '0';
+                    let currentStr = processValueStr(currentRaw, unit);
+
+                    let minStr = statStore[i].count > 0 ? processValueStr(Math.round(statStore[i].min * (unit.includes('x10000') ? 10000 : unit.includes('x1000') ? 1000 : unit.includes('x100') ? 100 : 1)).toString(), unit) : '-';
+                    let maxStr = statStore[i].count > 0 ? processValueStr(Math.round(statStore[i].max * (unit.includes('x10000') ? 10000 : unit.includes('x1000') ? 1000 : unit.includes('x100') ? 100 : 1)).toString(), unit) : '-';
+
+                    let prettyName = formatFieldName(field.name);
+
+                    if (prettyName === 'Water Depth' && statStore[i].count > 0) {
+                        prettyName = `Water Depth (${statStore[i].count} samples)`;
+                        latestWaterRawNum = processValueRaw(currentRaw, unit); // Save for 3D
+                        floatingVal.textContent = currentStr;
+                    }
+                    if (prettyName === 'Battery Voltage') {
+                        latestBatteryVolts = processValueRaw(currentRaw, unit);
+                    }
+
+                    elTableBody.innerHTML += `
+                        <tr>
+                            <td>${prettyName}</td>
+                            <td class="val-current">${currentStr}</td>
+                            <td>${minStr}</td>
+                            <td>${maxStr}</td>
+                        </tr>
+                    `;
+                });
+
+                // --- 3D INTERACTION UPDATES ---
+                // Set water height in 3D scene based on max possible depth (assume max is around 2m for visual scale)
+                const ASSUMED_MAX_DEPTH = 3.0; // 3 meters
+                if (latestWaterRawNum > 0) {
+                    // Map real height to cylinder scale (0.0 to 1.0)
+                    let scale = latestWaterRawNum / ASSUMED_MAX_DEPTH;
+                    if (scale > 1) scale = 1;
+                    if (scale < 0.05) scale = 0.05;
+                    targetWaterScaleY = scale;
+                    floatingHUD.style.display = 'block'; // Show floating label
+                }
+
+                // Set battery ring color
+                if (latestBatteryVolts >= 13.0) {
+                    ringMat.color.setHex(0x10b981); // Green
+                } else if (latestBatteryVolts >= 12.0) {
+                    ringMat.color.setHex(0xf59e0b); // Orange
+                } else {
+                    ringMat.color.setHex(0xef4444); // Red
+                }
+
+                renderChart();
+                elOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error(err);
+                elLoadingText.textContent = "SYSTEM FAILURE: " + err.message;
+            }
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+
+            if (currentChartInstance) {
+                currentChartInstance.destroy();
+            }
+
+            const isWater = currentDatasetType === 'waterDepth';
+            const data = isWater ? chartDataSets.waterDepth : chartDataSets.batteryVoltage;
+            const label = isWater ? 'Water Depth (m)' : 'Battery Voltage (V)';
+            const color = isWater ? '#38bdf8' : '#10b981'; // Cyber Blue or Green
+            const bgColor = isWater ? 'rgba(56, 189, 248, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+
+            const formattedTime = chartDataSets.timestamps.map(ts => {
+                const d = new Date(ts);
+                return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            });
+
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = "'JetBrains Mono', monospace";
+
+            currentChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: formattedTime,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: bgColor,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: color
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index', intersect: false,
+                            backgroundColor: 'rgba(10, 15, 30, 0.9)',
+                            titleColor: '#38bdf8',
+                            borderColor: 'rgba(56,189,248,0.5)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        window.switchChart = function (type) {
+            currentDatasetType = type;
+            const btnWater = document.getElementById('btn-water');
+            const btnBatt = document.getElementById('btn-battery');
+
+            if (type === 'waterDepth') {
+                btnWater.className = 'toggle-btn active-water';
+                btnBatt.className = 'toggle-btn';
+            } else {
+                btnWater.className = 'toggle-btn';
+                btnBatt.className = 'toggle-btn active-battery';
+            }
+            renderChart();
+        };
+
+        const selectElem = document.getElementById('store-select');
+        selectElem.addEventListener('change', (e) => {
+            loadStoreData(e.target.value);
+        });
+
+        // Add 3D label follower (Optional, to keep label near tank)
+        scene.onBeforeRender = function () {
+            // Can be expanded to project 3D coordinate to 2D screen space for the label
+        };
+
+        loadStoreData(selectElem.value);
+
+    </script>
+</body>
+
+</html>
